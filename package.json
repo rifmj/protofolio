@@ -1,0 +1,15 @@
+{
+  "name": "protofolio-docs",
+  "version": "1.0.0",
+  "description": "Documentation for protofolio - AsyncAPI 3.0 spec generation from Rust",
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.0"
+  }
+}
+

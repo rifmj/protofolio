@@ -38,3 +38,8 @@ coverage/
 lcov.info
 *.profraw
 
+# Node.js and VitePress
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
