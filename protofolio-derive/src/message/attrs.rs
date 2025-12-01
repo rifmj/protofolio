@@ -9,6 +9,12 @@ pub struct ExternalDocsAttrs {
     pub description: Option<LitStr>,
 }
 
+/// Parser structure for correlation ID attributes
+pub struct CorrelationIdAttrs {
+    pub location: LitStr,
+    pub description: Option<LitStr>,
+}
+
 /// Parser structure for message attributes
 pub struct MessageAttrs {
     pub channel: Option<LitStr>,
@@ -23,20 +29,21 @@ pub struct MessageAttrs {
     pub example: Option<LitStr>,
     pub examples: Option<Vec<LitStr>>,
     pub headers: Option<Path>,
+    pub correlation_id: Option<CorrelationIdAttrs>,
 }
 
 impl Parse for ExternalDocsAttrs {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut url = None;
         let mut description = None;
-        
+
         while !input.is_empty() {
             let lookahead = input.lookahead1();
             if lookahead.peek(syn::Ident) {
                 let ident: syn::Ident = input.parse()?;
                 input.parse::<Token![=]>()?;
                 let lit: LitStr = input.parse()?;
-                
+
                 match ident.to_string().as_str() {
                     "url" => url = Some(lit),
                     "description" => description = Some(lit),
@@ -52,12 +59,50 @@ impl Parse for ExternalDocsAttrs {
             } else {
                 return Err(lookahead.error());
             }
-            
+
             parse_optional_comma(input)?;
         }
-        
+
         Ok(Self {
             url: url.ok_or_else(|| input.error("external_docs requires 'url'"))?,
+            description,
+        })
+    }
+}
+
+impl Parse for CorrelationIdAttrs {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let mut location = None;
+        let mut description = None;
+
+        while !input.is_empty() {
+            let lookahead = input.lookahead1();
+            if lookahead.peek(syn::Ident) {
+                let ident: syn::Ident = input.parse()?;
+                input.parse::<Token![=]>()?;
+                let lit: LitStr = input.parse()?;
+
+                match ident.to_string().as_str() {
+                    "location" => location = Some(lit),
+                    "description" => description = Some(lit),
+                    _ => {
+                        return Err(Error::new(
+                            ident.span(),
+                            format!(
+                                "Unknown correlation_id attribute '{ident}'. Expected one of: location, description\n\nExample: #[asyncapi(correlation_id(location = \"$message.header#/correlationId\", description = \"Correlation ID\"))]"
+                            ),
+                        ));
+                    }
+                }
+            } else {
+                return Err(lookahead.error());
+            }
+
+            parse_optional_comma(input)?;
+        }
+
+        Ok(Self {
+            location: location.ok_or_else(|| input.error("correlation_id requires 'location'"))?,
             description,
         })
     }
@@ -77,14 +122,15 @@ impl Parse for MessageAttrs {
         let mut example = None;
         let mut examples = None;
         let mut headers = None;
-        
+        let mut correlation_id = None;
+
         while !input.is_empty() {
             let lookahead = input.lookahead1();
-            
+
             if lookahead.peek(syn::Ident) {
                 let ident: syn::Ident = input.parse()?;
                 let ident_str = ident.to_string();
-                
+
                 // Check if this is a tags array
                 if ident == "tags" {
                     input.parse::<Token![=]>()?;
@@ -96,6 +142,10 @@ impl Parse for MessageAttrs {
                     let content;
                     syn::parenthesized!(content in input);
                     external_docs = Some(content.parse()?);
+                } else if ident_str == "correlation_id" || ident_str == "correlationId" {
+                    let content;
+                    syn::parenthesized!(content in input);
+                    correlation_id = Some(content.parse()?);
                 } else if ident == "headers" {
                     input.parse::<Token![=]>()?;
                     headers = Some(input.parse::<Path>()?);
@@ -103,7 +153,7 @@ impl Parse for MessageAttrs {
                     // Parse the = and value
                     input.parse::<Token![=]>()?;
                     let span = ident.span();
-                    
+
                     match ident_str.as_str() {
                         "channel" => {
                             let lit: LitStr = input.parse()?;
@@ -141,7 +191,7 @@ impl Parse for MessageAttrs {
                             return Err(Error::new(
                                 span,
                                 format!(
-                                    "Unknown attribute '{ident_str}'. Expected one of: channel, summary, description, messageId, name, title, contentType, tags, example, examples, headers, external_docs\n\nExample: #[asyncapi(channel = \"events\", messageId = \"event-v1\", name = \"Event\", summary = \"An event\", tags = [\"events\"], example = \"{{\\\"id\\\": \\\"123\\\"}}\", headers = MyHeaders, external_docs(url = \"https://example.com/docs\"))]"
+                                    "Unknown attribute '{ident_str}'. Expected one of: channel, summary, description, messageId, name, title, contentType, tags, example, examples, headers, external_docs, correlation_id\n\nExample: #[asyncapi(channel = \"events\", messageId = \"event-v1\", name = \"Event\", summary = \"An event\", tags = [\"events\"], example = \"{{\\\"id\\\": \\\"123\\\"}}\", headers = MyHeaders, external_docs(url = \"https://example.com/docs\"), correlation_id(location = \"$message.header#/correlationId\"))]"
                                 ),
                             ));
                         }
@@ -150,10 +200,10 @@ impl Parse for MessageAttrs {
             } else {
                 return Err(lookahead.error());
             }
-            
+
             parse_optional_comma(input)?;
         }
-        
+
         Ok(Self {
             channel,
             summary,
@@ -167,7 +217,7 @@ impl Parse for MessageAttrs {
             example,
             examples,
             headers,
+            correlation_id,
         })
     }
 }
-

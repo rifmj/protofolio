@@ -8,27 +8,30 @@ use serde::{Deserialize, Serialize};
 /// Operation definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Operation {
+    /// Unique operation identifier
+    pub operation_id: String,
+
     /// Operation action (send, receive)
     pub action: String,
-    
+
     /// Channel reference
     pub channel: ChannelReference,
-    
+
     /// Message references
     pub messages: Vec<MessageReference>,
-    
+
     /// Operation summary
     #[serde(skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
-    
+
     /// Operation description
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    
+
     /// Operation tags
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<Tag>>,
-    
+
     /// External documentation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub external_docs: Option<ExternalDocumentation>,
@@ -49,4 +52,3 @@ pub struct MessageReference {
     #[serde(rename = "$ref")]
     pub ref_path: String,
 }
-

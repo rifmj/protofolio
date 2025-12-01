@@ -3,10 +3,7 @@
 //! This crate provides the derive macros for generating `AsyncAPI` specifications.
 //! Lints are configured in the workspace Cargo.toml and inherited here.
 #![deny(rustdoc::broken_intra_doc_links, unsafe_code)]
-#![warn(
-    missing_docs,
-    missing_debug_implementations
-)]
+#![warn(missing_docs, missing_debug_implementations)]
 #![allow(
     // Documentation - can be fixed incrementally
     clippy::missing_docs_in_private_items,

@@ -25,14 +25,14 @@ impl Parse for ExternalDocsAttrs {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut url = None;
         let mut description = None;
-        
+
         while !input.is_empty() {
             let lookahead = input.lookahead1();
             if lookahead.peek(syn::Ident) {
                 let ident: syn::Ident = input.parse()?;
                 input.parse::<Token![=]>()?;
                 let lit: LitStr = input.parse()?;
-                
+
                 match ident.to_string().as_str() {
                     "url" => url = Some(lit),
                     "description" => description = Some(lit),
@@ -48,10 +48,10 @@ impl Parse for ExternalDocsAttrs {
             } else {
                 return Err(lookahead.error());
             }
-            
+
             parse_optional_comma(input)?;
         }
-        
+
         Ok(Self {
             url: url.ok_or_else(|| input.error("external_docs requires 'url'"))?,
             description,
@@ -144,4 +144,3 @@ impl Parse for OperationAttrs {
         })
     }
 }
-

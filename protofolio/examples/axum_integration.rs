@@ -92,13 +92,12 @@ fn main() {
 
     // Generate and display the specification
     let json = AxumExampleApi::asyncapi_json().expect("Failed to generate JSON");
-    
+
     println!("Generated AsyncAPI specification:");
     println!("{}", json);
-    
+
     println!("\nTo serve this via HTTP, use the Axum handlers shown in the source code.");
     println!("The handlers would be available at:");
     println!("  - GET /asyncapi.json");
     println!("  - GET /asyncapi.yaml");
 }
-

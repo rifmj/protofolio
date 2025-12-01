@@ -40,4 +40,3 @@ mod bindings;
 mod validator;
 
 pub use validator::*;
-

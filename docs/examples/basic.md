@@ -217,7 +217,258 @@ pub struct Event {
 pub struct PublishEvent;
 ```
 
+## Message Examples
+
+Provide example payloads to help consumers understand message formats:
+
+```rust
+#[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+#[asyncapi(
+    channel = "order.created",
+    messageId = "order-created-v1",
+    example = r#"{"order_id": "12345", "customer_id": "user-789", "total": 99.99}"#
+)]
+pub struct OrderCreated {
+    pub order_id: String,
+    pub customer_id: String,
+    pub total: f64,
+}
+```
+
+For multiple examples:
+
+```rust
+#[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+#[asyncapi(
+    channel = "order.created",
+    messageId = "order-created-v1",
+    examples = [
+        r#"{"order_id": "12345", "customer_id": "user-789", "total": 99.99}"#,
+        r#"{"order_id": "67890", "customer_id": "user-456", "total": 149.50}"#
+    ]
+)]
+pub struct OrderCreated {
+    pub order_id: String,
+    pub customer_id: String,
+    pub total: f64,
+}
+```
+
+## Message Headers
+
+Define message headers using a separate type:
+
+```rust
+// Define header schema
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct MessageHeaders {
+    pub correlation_id: String,
+    pub user_id: Option<String>,
+}
+
+// Use in message
+#[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+#[asyncapi(
+    channel = "order.created",
+    messageId = "order-created-v1",
+    headers = MessageHeaders
+)]
+pub struct OrderCreated {
+    pub order_id: String,
+    pub customer_id: String,
+    pub total: f64,
+}
+```
+
+## Complete Example with Examples and Headers
+
+```rust
+use protofolio::AsyncApi;
+use protofolio_derive::{AsyncApi, AsyncApiMessage};
+use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
+
+// Define headers
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct OrderHeaders {
+    pub correlation_id: String,
+    pub trace_id: Option<String>,
+}
+
+// Define message with examples and headers
+#[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+#[asyncapi(
+    channel = "order.created",
+    messageId = "order-created-v1",
+    name = "OrderCreated",
+    title = "Order Created Event",
+    summary = "Published when a new order is created",
+    example = r#"{"order_id": "12345", "customer_id": "user-789", "total": 99.99}"#,
+    headers = OrderHeaders,
+    correlation_id(location = "$message.header#/correlationId", description = "Correlation ID for tracking")
+)]
+pub struct OrderCreated {
+    pub order_id: String,
+    pub customer_id: String,
+    pub total: f64,
+}
+
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(title = "Order Service API", version = "1.0.0"),
+    channels("order.created"),
+    messages(OrderCreated)
+)]
+pub struct OrderApi;
+
+// Generate spec
+let spec = OrderApi::asyncapi();
+```
+
+## Correlation IDs
+
+Correlation IDs help track related messages across your system:
+
+```rust
+#[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+#[asyncapi(
+    channel = "order.status.changed",
+    messageId = "order-status-changed-v1",
+    correlation_id(location = "$message.header#/correlationId")
+)]
+pub struct OrderStatusChanged {
+    pub order_id: String,
+    pub new_status: String,
+}
+```
+
+With description:
+
+```rust
+#[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+#[asyncapi(
+    channel = "order.status.changed",
+    messageId = "order-status-changed-v1",
+    correlation_id(
+        location = "$message.header#/correlationId",
+        description = "Correlation ID for tracking order events"
+    )
+)]
+pub struct OrderStatusChanged {
+    pub order_id: String,
+    pub new_status: String,
+}
+```
+
+## Components and `$ref` References
+
+Use components to define reusable messages that can be referenced from multiple channels:
+
+```rust
+use protofolio::{AsyncApiBuilder, Message, MessagePayload, MessageOrRef, Channel, Info};
+use std::collections::HashMap;
+
+// Define a reusable component message
+let spec = AsyncApiBuilder::new()
+    .info(Info {
+        title: "My API".to_string(),
+        version: "1.0.0".to_string(),
+        description: None,
+        external_docs: None,
+    })
+    // Define a component message
+    .component_message(
+        "CommonEvent".to_string(),
+        Message {
+            message_id: Some("common-event-v1".to_string()),
+            name: Some("CommonEvent".to_string()),
+            title: Some("Common Event".to_string()),
+            summary: Some("A reusable event message".to_string()),
+            description: None,
+            content_type: Some("application/json".to_string()),
+            tags: None,
+            external_docs: None,
+            payload: MessagePayload {
+                schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "timestamp": {"type": "integer"},
+                        "data": {"type": "string"}
+                    },
+                    "required": ["id", "timestamp"]
+                }),
+            },
+            examples: None,
+            headers: None,
+        },
+    )
+    // Reference the component in multiple channels
+    .channel(
+        "events.user".to_string(),
+        Channel {
+            description: None,
+            messages: {
+                let mut m = HashMap::new();
+                m.insert(
+                    "CommonEvent".to_string(),
+                    MessageOrRef::component_ref("CommonEvent"),
+                );
+                m
+            },
+            servers: None,
+            parameters: None,
+            bindings: None,
+        },
+    )
+    .channel(
+        "events.system".to_string(),
+        Channel {
+            description: None,
+            messages: {
+                let mut m = HashMap::new();
+                m.insert(
+                    "CommonEvent".to_string(),
+                    MessageOrRef::component_ref("CommonEvent"),
+                );
+                m
+            },
+            servers: None,
+            parameters: None,
+            bindings: None,
+        },
+    )
+    .build();
+```
+
+You can also define reusable schema components:
+
+```rust
+let spec = AsyncApiBuilder::new()
+    .info(Info {
+        title: "My API".to_string(),
+        version: "1.0.0".to_string(),
+        description: None,
+        external_docs: None,
+    })
+    // Define a reusable schema component
+    .component_schema(
+        "UserSchema".to_string(),
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "name": {"type": "string"},
+                "email": {"type": "string"}
+            },
+            "required": ["id", "name", "email"]
+        }),
+    )
+    .build();
+```
+
 ## See Also
 
 - [Advanced Examples](advanced.md) - More complex examples
 - [Integration Examples](integration.md) - Framework integration examples
+- [Messages Guide](../guides/messages.md#components-and-ref-references) - Detailed documentation on components

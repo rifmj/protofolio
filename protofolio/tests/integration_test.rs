@@ -2,7 +2,7 @@
 //!
 //! These tests verify the full macro-generated code paths and serialization.
 
-use protofolio::{AsyncApi, AsyncApiOperation, Tag, validate_spec};
+use protofolio::{validate_spec, AsyncApi, AsyncApiOperation, Tag};
 use protofolio_derive::{AsyncApi, AsyncApiMessage, AsyncApiOperation};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,10 +25,7 @@ pub struct TestMessage {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
-#[asyncapi(
-    channel = "simple.channel",
-    summary = "Simple message"
-)]
+#[asyncapi(channel = "simple.channel", summary = "Simple message")]
 pub struct SimpleMessage {
     pub text: String,
 }
@@ -109,12 +106,19 @@ fn test_asyncapi_server_variables() {
     assert!(vars.contains_key("host"));
     assert!(vars.contains_key("port"));
     assert_eq!(vars["host"].default, Some("localhost".to_string()));
-    assert_eq!(vars["host"].description, Some("Server hostname".to_string()));
+    assert_eq!(
+        vars["host"].description,
+        Some("Server hostname".to_string())
+    );
     assert_eq!(vars["port"].default, Some("4222".to_string()));
     assert_eq!(vars["port"].description, Some("Server port".to_string()));
     assert_eq!(
         vars["port"].enum_values,
-        Some(vec!["4222".to_string(), "4223".to_string(), "4224".to_string()])
+        Some(vec![
+            "4222".to_string(),
+            "4223".to_string(),
+            "4224".to_string()
+        ])
     );
 }
 
@@ -122,7 +126,11 @@ fn test_asyncapi_server_variables() {
 fn test_message_attributes() {
     let spec = TestAsyncApi::asyncapi();
     let channel = spec.channels.get("test.channel").unwrap();
-    let message = channel.messages.get("TestMessage").unwrap();
+    let message_or_ref = channel.messages.get("TestMessage").unwrap();
+    let message = match message_or_ref {
+        protofolio::MessageOrRef::Message(msg) => msg,
+        protofolio::MessageOrRef::Ref(_) => panic!("Expected inline message, got reference"),
+    };
 
     assert_eq!(message.message_id, Some("test-message-v1".to_string()));
     assert_eq!(message.name, Some("TestMessage".to_string()));
@@ -132,10 +140,7 @@ fn test_message_attributes() {
         message.description,
         Some("This is a test message for integration testing".to_string())
     );
-    assert_eq!(
-        message.content_type,
-        Some("application/json".to_string())
-    );
+    assert_eq!(message.content_type, Some("application/json".to_string()));
     assert!(message.tags.is_some());
     let tags = message.tags.as_ref().unwrap();
     assert_eq!(tags.len(), 2);
@@ -149,7 +154,11 @@ fn test_message_attributes() {
 fn test_message_schema_generation() {
     let spec = TestAsyncApi::asyncapi();
     let channel = spec.channels.get("test.channel").unwrap();
-    let message = channel.messages.get("TestMessage").unwrap();
+    let message_or_ref = channel.messages.get("TestMessage").unwrap();
+    let message = match message_or_ref {
+        protofolio::MessageOrRef::Message(msg) => msg,
+        protofolio::MessageOrRef::Ref(_) => panic!("Expected inline message, got reference"),
+    };
 
     // Verify schema was generated
     assert!(!message.payload.schema.is_null());
@@ -164,7 +173,7 @@ fn test_asyncapi_json_serialization() {
     assert!(!json.is_empty());
     assert!(json.contains("Test AsyncAPI"));
     assert!(json.contains("3.0.0"));
-    
+
     // Verify it's valid JSON
     let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
     assert_eq!(parsed["asyncapi"], "3.0.0");
@@ -176,7 +185,7 @@ fn test_asyncapi_yaml_serialization() {
     assert!(!yaml.is_empty());
     assert!(yaml.contains("Test AsyncAPI"));
     assert!(yaml.contains("3.0.0"));
-    
+
     // Verify it's valid YAML
     let parsed: serde_yaml_ng::Value = serde_yaml_ng::from_str(&yaml).unwrap();
     assert_eq!(parsed["asyncapi"].as_str().unwrap(), "3.0.0");
@@ -192,7 +201,11 @@ fn test_validate_spec() {
 fn test_simple_message() {
     let spec = TestAsyncApi::asyncapi();
     let channel = spec.channels.get("simple.channel").unwrap();
-    let message = channel.messages.get("SimpleMessage").unwrap();
+    let message_or_ref = channel.messages.get("SimpleMessage").unwrap();
+    let message = match message_or_ref {
+        protofolio::MessageOrRef::Message(msg) => msg,
+        protofolio::MessageOrRef::Ref(_) => panic!("Expected inline message, got reference"),
+    };
 
     assert_eq!(message.summary, Some("Simple message".to_string()));
     // Optional fields should be None
@@ -209,7 +222,7 @@ fn test_message_channel_methods() {
     assert_eq!(TestMessage::name(), Some("TestMessage"));
     assert_eq!(TestMessage::title(), Some("Test Message"));
     assert_eq!(TestMessage::content_type(), Some("application/json"));
-    
+
     let tags = TestMessage::tags().unwrap();
     assert_eq!(tags.len(), 2);
 }
@@ -217,11 +230,11 @@ fn test_message_channel_methods() {
 #[test]
 fn test_helper_functions() {
     let spec = TestAsyncApi::asyncapi();
-    
+
     // Test to_json helper
     let json = protofolio::to_json(&spec).unwrap();
     assert!(!json.is_empty());
-    
+
     // Test to_yaml helper
     let yaml = protofolio::to_yaml(&spec).unwrap();
     assert!(!yaml.is_empty());
@@ -277,7 +290,7 @@ fn test_operation_derive() {
         PublishTestMessage::description(),
         Some("Publishes a test message to the test channel")
     );
-    
+
     let tags = PublishTestMessage::tags().unwrap();
     assert_eq!(tags.len(), 2);
     assert!(tags.contains(&Tag {
@@ -291,7 +304,7 @@ fn test_operation_message_types() {
     let message_types = PublishTestMessage::message_types();
     assert_eq!(message_types.len(), 1);
     assert_eq!(message_types[0], "TestMessage");
-    
+
     let message_names = PublishTestMessage::message_names();
     assert_eq!(message_names.len(), 1);
     assert_eq!(message_names[0], "TestMessage");
@@ -303,7 +316,10 @@ fn test_operation_to_operation() {
     assert_eq!(operation.action, "send");
     assert_eq!(operation.channel.ref_path, "#/channels/test.channel");
     assert_eq!(operation.messages.len(), 1);
-    assert_eq!(operation.messages[0].ref_path, "#/channels/test.channel/messages/TestMessage");
+    assert_eq!(
+        operation.messages[0].ref_path,
+        "#/channels/test.channel/messages/TestMessage"
+    );
     assert_eq!(operation.summary, Some("Publish test message".to_string()));
     assert!(operation.tags.is_some());
 }
@@ -313,14 +329,14 @@ fn test_asyncapi_with_operations() {
     let spec = TestAsyncApiWithOperations::asyncapi();
     assert!(spec.operations.is_some());
     let operations = spec.operations.as_ref().unwrap();
-    
+
     assert!(operations.contains_key("publish-test-message"));
     assert!(operations.contains_key("subscribe-simple-message"));
-    
+
     let publish_op = operations.get("publish-test-message").unwrap();
     assert_eq!(publish_op.action, "send");
     assert_eq!(publish_op.channel.ref_path, "#/channels/test.channel");
-    
+
     let subscribe_op = operations.get("subscribe-simple-message").unwrap();
     assert_eq!(subscribe_op.action, "receive");
     assert_eq!(subscribe_op.channel.ref_path, "#/channels/simple.channel");
@@ -339,7 +355,7 @@ fn test_message_examples() {
         pub id: String,
         pub value: String,
     }
-    
+
     // Test message with multiple examples
     #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
     #[asyncapi(
@@ -351,7 +367,7 @@ fn test_message_examples() {
         pub id: String,
         pub value: String,
     }
-    
+
     // Verify single example
     let examples = ExampleMessage::examples();
     assert!(examples.is_some());
@@ -359,7 +375,7 @@ fn test_message_examples() {
     assert_eq!(examples_vec.len(), 1);
     assert_eq!(examples_vec[0]["id"], "123");
     assert_eq!(examples_vec[0]["value"], "test");
-    
+
     // Verify multiple examples
     let examples = MultiExampleMessage::examples();
     assert!(examples.is_some());
@@ -379,7 +395,7 @@ fn test_message_headers() {
         pub correlation_id: String,
         pub user_id: Option<String>,
     }
-    
+
     // Test message with headers
     #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
     #[asyncapi(
@@ -391,7 +407,7 @@ fn test_message_headers() {
         pub id: String,
         pub data: String,
     }
-    
+
     // Verify headers schema is generated
     let headers = HeaderMessage::headers();
     assert!(headers.is_some());
@@ -412,7 +428,7 @@ fn test_message_with_examples_and_headers_in_spec() {
     pub struct TestHeaders {
         pub correlation_id: String,
     }
-    
+
     // Test message with both examples and headers
     #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
     #[asyncapi(
@@ -425,7 +441,7 @@ fn test_message_with_examples_and_headers_in_spec() {
         pub id: String,
         pub data: String,
     }
-    
+
     #[derive(AsyncApi)]
     #[asyncapi(
         info(title = "Full Test API", version = "1.0.0"),
@@ -433,17 +449,21 @@ fn test_message_with_examples_and_headers_in_spec() {
         messages(FullMessage)
     )]
     pub struct FullTestApi;
-    
+
     let spec = FullTestApi::asyncapi();
     let channel = spec.channels.get("full.channel").unwrap();
-    let message = channel.messages.get("FullMessage").unwrap();
-    
+    let message_or_ref = channel.messages.get("FullMessage").unwrap();
+    let message = match message_or_ref {
+        protofolio::MessageOrRef::Message(msg) => msg,
+        protofolio::MessageOrRef::Ref(_) => panic!("Expected inline message, got reference"),
+    };
+
     // Verify examples are included
     assert!(message.examples.is_some());
     let examples = message.examples.as_ref().unwrap();
     assert_eq!(examples.len(), 1);
     assert_eq!(examples[0]["id"], "test");
-    
+
     // Verify headers are included
     assert!(message.headers.is_some());
     let headers = message.headers.as_ref().unwrap();
@@ -454,7 +474,7 @@ fn test_message_with_examples_and_headers_in_spec() {
 fn test_operations_serialization() {
     let spec = TestAsyncApiWithOperations::asyncapi();
     let json = protofolio::to_json(&spec).unwrap();
-    
+
     // Verify operations are in JSON
     let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
     assert!(parsed["operations"].is_object());
@@ -477,7 +497,10 @@ fn test_operation_with_tags() {
 fn test_operation_without_optional_fields() {
     let operation = SubscribeSimpleMessage::to_operation();
     assert_eq!(operation.action, "receive");
-    assert_eq!(operation.summary, Some("Subscribe to simple messages".to_string()));
+    assert_eq!(
+        operation.summary,
+        Some("Subscribe to simple messages".to_string())
+    );
     assert!(operation.description.is_none());
     assert!(operation.tags.is_none());
 }
@@ -488,7 +511,7 @@ fn test_operation_without_optional_fields() {
 fn test_try_asyncapi_success() {
     let result = TestAsyncApi::try_asyncapi();
     assert!(result.is_ok());
-    
+
     let spec = result.unwrap();
     assert_eq!(spec.asyncapi, "3.0.0");
     assert_eq!(spec.info.title, "Test AsyncAPI");
@@ -500,7 +523,7 @@ fn test_try_asyncapi_matches_asyncapi() {
     // Verify try_asyncapi() produces same result as asyncapi() for valid specs
     let spec1 = TestAsyncApi::asyncapi();
     let spec2 = TestAsyncApi::try_asyncapi().unwrap();
-    
+
     // Compare key fields
     assert_eq!(spec1.asyncapi, spec2.asyncapi);
     assert_eq!(spec1.info.title, spec2.info.title);
@@ -518,7 +541,7 @@ fn test_try_asyncapi_matches_asyncapi() {
 fn test_try_asyncapi_with_operations() {
     let result = TestAsyncApiWithOperations::try_asyncapi();
     assert!(result.is_ok());
-    
+
     let spec = result.unwrap();
     assert!(spec.operations.is_some());
     let operations = spec.operations.as_ref().unwrap();
@@ -531,14 +554,14 @@ fn test_try_asyncapi_serialization_consistency() {
     // Test that try_asyncapi() results can be serialized the same way
     let spec1 = TestAsyncApi::asyncapi();
     let spec2 = TestAsyncApi::try_asyncapi().unwrap();
-    
+
     let json1 = protofolio::to_json(&spec1).unwrap();
     let json2 = protofolio::to_json(&spec2).unwrap();
-    
+
     // Parse and compare
     let parsed1: serde_json::Value = serde_json::from_str(&json1).unwrap();
     let parsed2: serde_json::Value = serde_json::from_str(&json2).unwrap();
-    
+
     assert_eq!(parsed1["asyncapi"], parsed2["asyncapi"]);
     assert_eq!(parsed1["info"]["title"], parsed2["info"]["title"]);
     assert_eq!(parsed1["info"]["version"], parsed2["info"]["version"]);
@@ -549,11 +572,11 @@ fn test_try_asyncapi_yaml_consistency() {
     // Test that try_asyncapi() works with YAML serialization
     let spec = TestAsyncApi::try_asyncapi().unwrap();
     let yaml = protofolio::to_yaml(&spec).unwrap();
-    
+
     assert!(!yaml.is_empty());
     assert!(yaml.contains("Test AsyncAPI"));
     assert!(yaml.contains("3.0.0"));
-    
+
     // Verify it's valid YAML
     let parsed: serde_yaml_ng::Value = serde_yaml_ng::from_str(&yaml).unwrap();
     assert_eq!(parsed["asyncapi"].as_str().unwrap(), "3.0.0");
@@ -563,7 +586,7 @@ fn test_try_asyncapi_yaml_consistency() {
 fn test_try_asyncapi_error_recovery() {
     // Test that we can handle errors gracefully
     let result = TestAsyncApi::try_asyncapi();
-    
+
     match result {
         Ok(spec) => {
             // Success case - verify spec is valid
@@ -575,8 +598,130 @@ fn test_try_asyncapi_error_recovery() {
             // Error case - verify error is informative
             let error_msg = format!("{}", e);
             assert!(!error_msg.is_empty());
-            panic!("try_asyncapi() should succeed for valid TestAsyncApi, got error: {}", error_msg);
+            panic!(
+                "try_asyncapi() should succeed for valid TestAsyncApi, got error: {}",
+                error_msg
+            );
         }
     }
 }
 
+#[test]
+fn test_correlation_id_in_message() {
+    #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+    #[asyncapi(
+        channel = "correlation.channel",
+        messageId = "correlation-message-v1",
+        correlation_id(
+            location = "$message.header#/correlationId",
+            description = "Correlation ID for tracking"
+        )
+    )]
+    pub struct CorrelationMessage {
+        pub id: String,
+        pub data: String,
+    }
+
+    #[derive(AsyncApi)]
+    #[asyncapi(
+        info(title = "Correlation Test API", version = "1.0.0"),
+        channels("correlation.channel"),
+        messages(CorrelationMessage)
+    )]
+    pub struct CorrelationTestApi;
+
+    let spec = CorrelationTestApi::asyncapi();
+    let channel = spec.channels.get("correlation.channel").unwrap();
+    let message_or_ref = channel.messages.get("CorrelationMessage").unwrap();
+    let message = match message_or_ref {
+        protofolio::MessageOrRef::Message(msg) => msg,
+        protofolio::MessageOrRef::Ref(_) => panic!("Expected inline message, got reference"),
+    };
+
+    // Verify correlation ID is present
+    assert!(message.correlation_id.is_some());
+    let corr_id = message.correlation_id.as_ref().unwrap();
+    assert_eq!(corr_id.location, "$message.header#/correlationId");
+    assert_eq!(
+        corr_id.description,
+        Some("Correlation ID for tracking".to_string())
+    );
+}
+
+#[test]
+fn test_channel_address_field() {
+    let spec = TestAsyncApi::asyncapi();
+    let channel = spec.channels.get("test.channel").unwrap();
+
+    // Verify address field is present and equals channel name (default behavior)
+    assert_eq!(channel.address, "test.channel");
+}
+
+#[test]
+fn test_operation_id_field() {
+    let spec = TestAsyncApiWithOperations::asyncapi();
+    let operations = spec.operations.as_ref().unwrap();
+
+    // Verify operation ID is present in the operation struct
+    let publish_op = operations.get("publish-test-message").unwrap();
+    assert_eq!(publish_op.operation_id, "publish-test-message");
+
+    let subscribe_op = operations.get("subscribe-simple-message").unwrap();
+    assert_eq!(subscribe_op.operation_id, "subscribe-simple-message");
+}
+
+#[test]
+fn test_correlation_id_serialization() {
+    #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+    #[asyncapi(
+        channel = "serialization.channel",
+        messageId = "serialization-message-v1",
+        correlation_id(location = "$message.header#/correlationId")
+    )]
+    pub struct SerializationMessage {
+        pub id: String,
+    }
+
+    #[derive(AsyncApi)]
+    #[asyncapi(
+        info(title = "Serialization Test API", version = "1.0.0"),
+        channels("serialization.channel"),
+        messages(SerializationMessage)
+    )]
+    pub struct SerializationTestApi;
+
+    let spec = SerializationTestApi::asyncapi();
+    let json = protofolio::to_json(&spec).unwrap();
+
+    // Verify correlation ID is in JSON output
+    let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+    let channel = &parsed["channels"]["serialization.channel"];
+    let message = &channel["messages"]["SerializationMessage"];
+    assert!(message["correlationId"].is_object());
+    assert_eq!(
+        message["correlationId"]["location"],
+        "$message.header#/correlationId"
+    );
+}
+
+#[test]
+fn test_channel_address_in_json() {
+    let spec = TestAsyncApi::asyncapi();
+    let json = protofolio::to_json(&spec).unwrap();
+
+    // Verify address field is in JSON output
+    let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+    let channel = &parsed["channels"]["test.channel"];
+    assert_eq!(channel["address"], "test.channel");
+}
+
+#[test]
+fn test_operation_id_in_json() {
+    let spec = TestAsyncApiWithOperations::asyncapi();
+    let json = protofolio::to_json(&spec).unwrap();
+
+    // Verify operation ID is in JSON output
+    let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+    let operation = &parsed["operations"]["publish-test-message"];
+    assert_eq!(operation["operationId"], "publish-test-message");
+}

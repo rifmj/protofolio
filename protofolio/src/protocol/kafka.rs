@@ -1,7 +1,9 @@
 //! Kafka protocol support
 
+use super::bindings::{
+    KafkaChannelBinding, KafkaChannelConfig, KafkaMessageBinding, KafkaMessageConfig,
+};
 use super::Protocol;
-use super::bindings::{KafkaChannelBinding, KafkaChannelConfig, KafkaMessageBinding, KafkaMessageConfig};
 
 /// Kafka protocol identifier
 pub const PROTOCOL: &str = "kafka";
@@ -16,7 +18,7 @@ impl Protocol for KafkaProtocol {
     fn name() -> &'static str {
         "Apache Kafka"
     }
-    
+
     fn identifier() -> &'static str {
         PROTOCOL
     }
@@ -38,9 +40,10 @@ impl KafkaProtocol {
                 topic_configuration: None,
                 binding_version: Some("0.4.0".to_string()),
             },
-        }).unwrap_or_else(|_| serde_json::json!({}))
+        })
+        .unwrap_or_else(|_| serde_json::json!({}))
     }
-    
+
     /// Create a Kafka message binding with key
     pub fn message_binding(key_schema: Option<serde_json::Value>) -> serde_json::Value {
         serde_json::to_value(KafkaMessageBinding {
@@ -51,7 +54,8 @@ impl KafkaProtocol {
                 schema_lookup_strategy: None,
                 binding_version: Some("0.4.0".to_string()),
             },
-        }).unwrap_or_else(|_| serde_json::json!({}))
+        })
+        .unwrap_or_else(|_| serde_json::json!({}))
     }
 }
 
@@ -67,12 +71,9 @@ mod tests {
 
     #[test]
     fn test_kafka_channel_binding() {
-        let binding = KafkaProtocol::channel_binding(
-            Some("test-topic".to_string()),
-            Some(3),
-            Some(2),
-        );
-        
+        let binding =
+            KafkaProtocol::channel_binding(Some("test-topic".to_string()), Some(3), Some(2));
+
         assert!(binding["kafka"]["topic"].as_str().is_some());
         assert_eq!(binding["kafka"]["topic"], "test-topic");
         assert_eq!(binding["kafka"]["partitions"], 3);
@@ -83,9 +84,8 @@ mod tests {
     fn test_kafka_message_binding() {
         let key_schema = serde_json::json!({"type": "string"});
         let binding = KafkaProtocol::message_binding(Some(key_schema.clone()));
-        
+
         assert!(!binding["kafka"]["key"].is_null());
         assert_eq!(binding["kafka"]["key"], key_schema);
     }
 }
-

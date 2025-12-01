@@ -32,7 +32,7 @@ The `AsyncApiOperation` derive macro supports the following attributes:
 
 ### Required Attributes
 
-- `id` - Unique operation identifier (required)
+- `id` - Unique operation identifier (required). This becomes the `operationId` field in the generated AsyncAPI specification.
 - `action` - Either "send" or "receive" (required)
 - `channel` - The channel name for this operation (required)
 - `messages(...)` - List of message types (at least one required)
@@ -43,6 +43,8 @@ The `AsyncApiOperation` derive macro supports the following attributes:
 - `description` - Detailed description
 - `tags` - Array of tag names (e.g., `tags = ["orders", "events"]`)
 - `external_docs` - External documentation reference (e.g., `external_docs(url = "https://example.com/docs", description = "Documentation")`)
+
+**Note:** The `id` attribute you specify is automatically included as the `operationId` field in the generated `Operation` struct, which is required by AsyncAPI 3.0.
 
 ## Send Operations
 

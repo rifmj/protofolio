@@ -1,6 +1,8 @@
 //! Tests for error handling in try_asyncapi()
 
-use protofolio::{AsyncApi, AsyncApiBuilder, Info, Channel, Message, MessagePayload, ValidationError};
+use protofolio::{
+    AsyncApi, AsyncApiBuilder, Channel, Info, Message, MessagePayload, ValidationError,
+};
 use protofolio_derive::{AsyncApi, AsyncApiMessage};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -30,7 +32,7 @@ fn test_try_asyncapi_success() {
     // Test that try_asyncapi() works for valid specs
     let result = TestAsyncApi::try_asyncapi();
     assert!(result.is_ok());
-    
+
     let spec = result.unwrap();
     assert_eq!(spec.info.title, "Test API");
     assert_eq!(spec.info.version, "1.0.0");
@@ -42,7 +44,7 @@ fn test_try_asyncapi_matches_asyncapi() {
     // Test that try_asyncapi() produces the same result as asyncapi() for valid specs
     let spec1 = TestAsyncApi::asyncapi();
     let spec2 = TestAsyncApi::try_asyncapi().unwrap();
-    
+
     // Compare key fields
     assert_eq!(spec1.info.title, spec2.info.title);
     assert_eq!(spec1.info.version, spec2.info.version);
@@ -60,11 +62,11 @@ fn test_validation_error_on_invalid_spec() {
             description: None,
         })
         .build();
-    
+
     // Validate should fail
     let result = protofolio::validate_spec(&invalid_spec);
     assert!(result.is_err());
-    
+
     if let Err(ValidationError::EmptyChannels) = result {
         // Expected error
     } else {
@@ -92,10 +94,10 @@ fn test_validation_error_channel_without_messages() {
             },
         )
         .build();
-    
+
     let result = protofolio::validate_spec(&invalid_spec);
     assert!(result.is_err());
-    
+
     if let Err(ValidationError::ChannelWithoutMessages(_)) = result {
         // Expected error
     } else {
@@ -122,7 +124,7 @@ fn test_validation_error_duplicate_message_id() {
             },
         },
     );
-    
+
     let mut messages2 = HashMap::new();
     messages2.insert(
         "Message2".to_string(),
@@ -139,7 +141,7 @@ fn test_validation_error_duplicate_message_id() {
             },
         },
     );
-    
+
     let invalid_spec = AsyncApiBuilder::new()
         .info(Info {
             title: "Test".to_string(),
@@ -167,10 +169,10 @@ fn test_validation_error_duplicate_message_id() {
             },
         )
         .build();
-    
+
     let result = protofolio::validate_spec(&invalid_spec);
     assert!(result.is_err());
-    
+
     if let Err(ValidationError::DuplicateMessageId(_)) = result {
         // Expected error
     } else {
@@ -188,12 +190,11 @@ fn test_error_message_quality() {
             description: None,
         })
         .build();
-    
+
     let result = protofolio::validate_spec(&invalid_spec);
     assert!(result.is_err());
-    
+
     let error_msg = format!("{}", result.unwrap_err());
     assert!(error_msg.contains("Empty channels"));
     assert!(error_msg.contains("specification must have at least one channel"));
 }
-

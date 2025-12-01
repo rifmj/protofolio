@@ -57,9 +57,5 @@ pub enum ValidationError {
     SchemaGenerationFailed(String, String),
 
     #[error("Message '{message}' not found in channel '{channel}'\n\nHint: Ensure the message type is included in messages(...) in your #[asyncapi] attribute and uses the correct channel")]
-    MessageNotFound {
-        channel: String,
-        message: String,
-    },
+    MessageNotFound { channel: String, message: String },
 }
-

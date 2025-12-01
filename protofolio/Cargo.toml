@@ -30,6 +30,9 @@ serde_yaml_ng = { workspace = true }
 schemars = { workspace = true }
 thiserror = { workspace = true }
 protofolio-derive = { version = "0.1.0", path = "../protofolio-derive" }
+# Pin indexmap to a version compatible with Rust 1.80
+# indexmap 2.12.1 requires Rust 1.82, but we target 1.80
+indexmap = "=2.10.0"
 
 [dev-dependencies]
 protofolio-derive = { version = "0.1.0", path = "../protofolio-derive" }

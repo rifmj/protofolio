@@ -9,6 +9,7 @@ description = "Procedural macros for protofolio"
 repository = "https://github.com/rifmj/protofolio"
 homepage = "https://github.com/rifmj/protofolio"
 documentation = "https://docs.rs/protofolio-derive"
+readme = "../README.md"
 keywords = ["asyncapi", "proc-macro", "derive", "code-generation"]
 categories = ["development-tools", "proc-macro"]
 publish = true

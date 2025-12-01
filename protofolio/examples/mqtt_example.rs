@@ -133,4 +133,3 @@ fn main() {
     println!("✓ Use secure connections (MQTTS) in production");
     println!("✓ Design topics for scalability and filtering");
 }
-

@@ -12,10 +12,7 @@ use serde::{Deserialize, Serialize};
 
 // Define a simple message type
 #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
-#[asyncapi(
-    channel = "events",
-    messageId = "event-v1"
-)]
+#[asyncapi(channel = "events", messageId = "event-v1")]
 pub struct Event {
     pub id: String,
     pub data: String,
@@ -43,4 +40,3 @@ fn main() {
     println!("\nGenerated AsyncAPI specification (YAML):");
     println!("{}", yaml);
 }
-

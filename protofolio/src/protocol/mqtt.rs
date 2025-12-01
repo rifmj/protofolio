@@ -1,7 +1,9 @@
 //! MQTT protocol support
 
+use super::bindings::{
+    MqttChannelBinding, MqttChannelConfig, MqttMessageBinding, MqttMessageConfig,
+};
 use super::Protocol;
-use super::bindings::{MqttChannelBinding, MqttChannelConfig, MqttMessageBinding, MqttMessageConfig};
 
 /// MQTT protocol identifier
 pub const PROTOCOL: &str = "mqtt";
@@ -47,7 +49,7 @@ impl Protocol for MqttProtocol {
     fn name() -> &'static str {
         "MQTT"
     }
-    
+
     fn identifier() -> &'static str {
         PROTOCOL
     }
@@ -68,21 +70,20 @@ impl MqttProtocol {
                 topic,
                 binding_version: Some("0.2.0".to_string()),
             },
-        }).unwrap_or_else(|_| serde_json::json!({}))
+        })
+        .unwrap_or_else(|_| serde_json::json!({}))
     }
-    
+
     /// Create an MQTT message binding
-    pub fn message_binding(
-        qos: Option<MqttQos>,
-        retain: Option<bool>,
-    ) -> serde_json::Value {
+    pub fn message_binding(qos: Option<MqttQos>, retain: Option<bool>) -> serde_json::Value {
         serde_json::to_value(MqttMessageBinding {
             config: MqttMessageConfig {
                 qos: qos.map(|q| q.as_u8()),
                 retain,
                 binding_version: Some("0.2.0".to_string()),
             },
-        }).unwrap_or_else(|_| serde_json::json!({}))
+        })
+        .unwrap_or_else(|_| serde_json::json!({}))
     }
 }
 
@@ -115,7 +116,7 @@ mod tests {
             Some(MqttQos::AtLeastOnce),
             Some(false),
         );
-        
+
         assert_eq!(binding["mqtt"]["topic"], "test/topic");
         assert_eq!(binding["mqtt"]["qos"], 1);
         assert_eq!(binding["mqtt"]["retain"], false);
@@ -123,13 +124,9 @@ mod tests {
 
     #[test]
     fn test_mqtt_message_binding() {
-        let binding = MqttProtocol::message_binding(
-            Some(MqttQos::ExactlyOnce),
-            Some(true),
-        );
-        
+        let binding = MqttProtocol::message_binding(Some(MqttQos::ExactlyOnce), Some(true));
+
         assert_eq!(binding["mqtt"]["qos"], 2);
         assert_eq!(binding["mqtt"]["retain"], true);
     }
 }
-

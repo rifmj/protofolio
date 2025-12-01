@@ -26,6 +26,7 @@
 //!         security: None,
 //!     })
 //!     .channel("events".to_string(), Channel {
+//!         address: "events".to_string(),
 //!         description: None,
 //!         messages: {
 //!             let mut m = HashMap::new();
@@ -40,6 +41,10 @@
 //!                 payload: MessagePayload {
 //!                     schema: serde_json::json!({"type": "object"}),
 //!                 },
+//!                 external_docs: None,
+//!                 examples: None,
+//!                 headers: None,
+//!                 correlation_id: None,
 //!             });
 //!             m
 //!         },
@@ -110,6 +115,24 @@ impl AsyncApiBuilder {
         self
     }
 
+    /// Add a message to a channel (inline message)
+    #[must_use]
+    pub fn channel_message(
+        mut self,
+        channel_name: String,
+        message_name: String,
+        message: Message,
+    ) -> Self {
+        use crate::spec::MessageOrRef;
+
+        if let Some(channel) = self.spec.channels.get_mut(&channel_name) {
+            channel
+                .messages
+                .insert(message_name, MessageOrRef::message(message));
+        }
+        self
+    }
+
     /// Add a channel with parameters
     #[must_use]
     pub fn channel_with_params(
@@ -135,6 +158,60 @@ impl AsyncApiBuilder {
         let mut ch = channel;
         ch.bindings = Some(bindings);
         self.spec.channels.insert(name, ch);
+        self
+    }
+
+    /// Add a component message
+    #[must_use]
+    pub fn component_message(mut self, name: String, message: Message) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.messages.is_none() {
+                components.messages = Some(Default::default());
+            }
+            if let Some(ref mut messages) = components.messages {
+                messages.insert(name, message);
+            }
+        }
+        self
+    }
+
+    /// Add a component schema
+    #[must_use]
+    pub fn component_schema(mut self, name: String, schema: serde_json::Value) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.schemas.is_none() {
+                components.schemas = Some(Default::default());
+            }
+            if let Some(ref mut schemas) = components.schemas {
+                schemas.insert(name, schema);
+            }
+        }
+        self
+    }
+
+    /// Add a message reference to a channel (references a component message)
+    #[must_use]
+    pub fn channel_message_ref(
+        mut self,
+        channel_name: String,
+        message_name: String,
+        component_name: String,
+    ) -> Self {
+        use crate::spec::{MessageOrRef, MessageReference};
+
+        if let Some(channel) = self.spec.channels.get_mut(&channel_name) {
+            let ref_path = format!("#/components/messages/{}", component_name);
+            channel.messages.insert(
+                message_name,
+                MessageOrRef::Ref(MessageReference { ref_path }),
+            );
+        }
         self
     }
 

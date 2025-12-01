@@ -50,6 +50,7 @@ See the [Getting Started Guide](docs/guides/getting-started.md) for installation
 - **Multi-protocol support**: Built-in support for NATS, Kafka, and MQTT
 - **YAML and JSON output**: Generate specs in both YAML and JSON formats
 - **Enhanced attributes**: Support for messageId, name, title, contentType, tags, and more
+- **Components and `$ref` references**: Reusable messages and schemas with component references
 - **Validation**: Built-in validation for generated specifications
 - **Error handling**: Both panic-on-error (`asyncapi()`) and Result-based (`try_asyncapi()`) APIs
 - **Schema caching**: Automatic caching of generated JSON schemas for performance
@@ -127,12 +128,15 @@ This crate is in active development. Current features:
 - ✅ Security schemes (userPassword, apiKey, http, oauth2, etc.)
 - ✅ External documentation support (Info, Message, Operation)
 - ✅ Server variables (templated URLs with variable definitions)
+- ✅ Message examples (single or multiple example payloads)
+- ✅ Message headers (schema definition for message headers)
+- ✅ Components and `$ref` references (reusable messages and schemas)
+- ✅ Correlation IDs (message correlation tracking with location expressions)
+- ✅ Channel address field (required AsyncAPI 3.0 field)
+- ✅ Operation ID field (unique operation identifiers)
 
 Future expansions planned:
 
-- Components and `$ref` references
-- Message examples and headers
-- Correlation IDs
 - Full AsyncAPI 3.0 feature set
 
 ## License

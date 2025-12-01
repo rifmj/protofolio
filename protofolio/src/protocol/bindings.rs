@@ -126,4 +126,3 @@ pub struct MqttMessageConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub binding_version: Option<String>,
 }
-

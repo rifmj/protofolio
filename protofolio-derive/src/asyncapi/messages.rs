@@ -5,10 +5,7 @@ use quote::quote;
 use syn::Ident;
 
 /// Generate code for message handling (panic version for asyncapi())
-pub fn generate_messages_code(
-    messages: &[syn::Path],
-    ident: &Ident,
-) -> Vec<TokenStream> {
+pub fn generate_messages_code(messages: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     messages
         .iter()
         .map(|message_type| {
@@ -19,7 +16,7 @@ pub fn generate_messages_code(
                     const _: () = {
                         const _CHECK: &str = #message_type_ident::CHANNEL;
                     };
-                    
+
                     use schemars::JsonSchema;
                     let schema = protofolio::schema_for_type::<#message_type_ident>()
                         .unwrap_or_else(|e| {
@@ -31,7 +28,7 @@ pub fn generate_messages_code(
                         });
                     let message_name_str = stringify!(#message_type_ident);
                     let channel_name = #message_type_ident::channel();
-                    
+
                     if !channels_map.contains_key(channel_name) {
                         let available: Vec<_> = channels_map.keys().collect();
                         let available_str = if available.is_empty() {
@@ -49,7 +46,7 @@ pub fn generate_messages_code(
                             channel_name
                         );
                     }
-                    
+
                     let message = Message {
                         message_id: #message_type_ident::message_id().map(|s| s.to_string()),
                         name: #message_type_ident::name().map(|s| s.to_string()),
@@ -64,11 +61,12 @@ pub fn generate_messages_code(
                         external_docs: #message_type_ident::external_docs(),
                         examples: #message_type_ident::examples(),
                         headers: #message_type_ident::headers(),
+                        correlation_id: #message_type_ident::correlation_id(),
                     };
-                    
+
                     channels_map.get_mut(channel_name)
                         .expect(&format!("Channel '{}' should exist (validated at compile time)", channel_name))
-                        .messages.insert(message_name_str.to_string(), message);
+                        .messages.insert(message_name_str.to_string(), protofolio::MessageOrRef::message(message));
                 }
             }
         })
@@ -76,10 +74,7 @@ pub fn generate_messages_code(
 }
 
 /// Generate code for message handling (error-returning version for try_asyncapi())
-pub fn generate_messages_try_code(
-    messages: &[syn::Path],
-    ident: &Ident,
-) -> Vec<TokenStream> {
+pub fn generate_messages_try_code(messages: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     messages
         .iter()
         .map(|message_type| {
@@ -89,7 +84,7 @@ pub fn generate_messages_try_code(
                     const _: () = {
                         const _CHECK: &str = #message_type_ident::CHANNEL;
                     };
-                    
+
                     use schemars::JsonSchema;
                     let schema = match protofolio::schema_for_type::<#message_type_ident>() {
                         Ok(s) => s,
@@ -102,7 +97,7 @@ pub fn generate_messages_try_code(
                     };
                     let message_name_str = stringify!(#message_type_ident);
                     let channel_name = #message_type_ident::channel();
-                    
+
                     if !channels_map.contains_key(channel_name) {
                         let available: Vec<_> = channels_map.keys().collect();
                         let available_str = if available.is_empty() {
@@ -114,7 +109,7 @@ pub fn generate_messages_try_code(
                             format!("Message '{}' (type: {}) references channel '{}' which is not declared. {}", message_name_str, stringify!(#message_type_ident), channel_name, available_str)
                         ));
                     }
-                    
+
                     let message = Message {
                         message_id: #message_type_ident::message_id().map(|s| s.to_string()),
                         name: #message_type_ident::name().map(|s| s.to_string()),
@@ -129,16 +124,16 @@ pub fn generate_messages_try_code(
                         external_docs: #message_type_ident::external_docs(),
                         examples: #message_type_ident::examples(),
                         headers: #message_type_ident::headers(),
+                        correlation_id: #message_type_ident::correlation_id(),
                     };
-                    
+
                     channels_map.get_mut(channel_name)
                         .ok_or_else(|| protofolio::ValidationError::InvalidChannelReference(
                             format!("Channel '{}' should exist (validated above)", channel_name)
                         ))?
-                        .messages.insert(message_name_str.to_string(), message);
+                        .messages.insert(message_name_str.to_string(), protofolio::MessageOrRef::message(message));
                 }
             }
         })
         .collect()
 }
-

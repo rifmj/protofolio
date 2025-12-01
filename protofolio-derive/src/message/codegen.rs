@@ -1,16 +1,15 @@
 //! Code generation for AsyncApiMessage derive macro
 
-use crate::message::attrs::ExternalDocsAttrs;
+use crate::message::attrs::{CorrelationIdAttrs, ExternalDocsAttrs};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Ident, LitStr, Path};
 
 /// Generate optional field code
 pub fn generate_optional_field_code(option: &Option<LitStr>) -> TokenStream {
-    option.as_ref().map_or_else(
-        || quote! { None },
-        |s| quote! { Some(#s) },
-    )
+    option
+        .as_ref()
+        .map_or_else(|| quote! { None }, |s| quote! { Some(#s) })
 }
 
 /// Generate tags code
@@ -114,6 +113,29 @@ pub fn generate_headers_code(headers: &Option<Path>) -> TokenStream {
     )
 }
 
+/// Generate correlation ID code
+pub fn generate_correlation_id_code(correlation_id: &Option<CorrelationIdAttrs>) -> TokenStream {
+    correlation_id.as_ref().map_or_else(
+        || quote! { None },
+        |corr_id| {
+            let location_lit = &corr_id.location;
+            let desc_expr = corr_id.description.as_ref().map_or_else(
+                || quote! { None },
+                |desc| {
+                    let desc_str = desc.value();
+                    quote! { Some(#desc_str.to_string()) }
+                },
+            );
+            quote! {
+                Some(protofolio::CorrelationId {
+                    location: #location_lit.to_string(),
+                    description: #desc_expr,
+                })
+            }
+        },
+    )
+}
+
 /// Generate the complete impl block for AsyncApiMessage
 pub fn generate_impl_block(
     ident: &Ident,
@@ -128,6 +150,7 @@ pub fn generate_impl_block(
     external_docs_opt: TokenStream,
     examples_opt: TokenStream,
     headers_opt: TokenStream,
+    correlation_id_opt: TokenStream,
 ) -> TokenStream {
     quote! {
         impl #ident {
@@ -135,60 +158,64 @@ pub fn generate_impl_block(
             pub fn channel() -> &'static str {
                 #channel_lit
             }
-            
+
             /// Channel name constant for compile-time validation
             pub const CHANNEL: &'static str = #channel_lit;
-            
+
             /// Get the summary for this message
             pub fn summary() -> Option<&'static str> {
                 #summary_opt
             }
-            
+
             /// Get the description for this message
             pub fn description() -> Option<&'static str> {
                 #desc_opt
             }
-            
+
             /// Get the message ID for this message
             pub fn message_id() -> Option<&'static str> {
                 #message_id_opt
             }
-            
+
             /// Get the name for this message
             pub fn name() -> Option<&'static str> {
                 #name_opt
             }
-            
+
             /// Get the title for this message
             pub fn title() -> Option<&'static str> {
                 #title_opt
             }
-            
+
             /// Get the content type for this message
             pub fn content_type() -> Option<&'static str> {
                 #content_type_opt
             }
-            
+
             /// Get the tags for this message
             pub fn tags() -> Option<Vec<protofolio::Tag>> {
                 #tags_opt
             }
-            
+
             /// Get the external documentation for this message
             pub fn external_docs() -> Option<protofolio::ExternalDocumentation> {
                 #external_docs_opt
             }
-            
+
             /// Get the examples for this message
             pub fn examples() -> Option<Vec<serde_json::Value>> {
                 #examples_opt
             }
-            
+
             /// Get the headers schema for this message
             pub fn headers() -> Option<protofolio::MessagePayload> {
                 #headers_opt
             }
+
+            /// Get the correlation ID for this message
+            pub fn correlation_id() -> Option<protofolio::CorrelationId> {
+                #correlation_id_opt
+            }
         }
     }
 }
-

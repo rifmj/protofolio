@@ -1,4 +1,4 @@
-//! Code generation for servers, channels, and impl block in AsyncApi derive macro
+//! Code generation for servers, channels, and impl block in `AsyncApi` derive macro
 
 use crate::asyncapi::attrs::{SecuritySchemeAttrs, ServerAttrs};
 use proc_macro2::TokenStream;
@@ -13,12 +13,13 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
             let name_lit = &server.name;
             let url_lit = &server.url;
             let protocol_lit = &server.protocol;
-            
+
             // Generate security requirements if present
             let security_expr = if server.security.is_empty() {
                 quote! { None }
             } else {
-                let security_reqs: Vec<TokenStream> = server.security
+                let security_reqs: Vec<TokenStream> = server
+                    .security
                     .iter()
                     .map(|req_list| {
                         let scheme_names: Vec<TokenStream> = req_list
@@ -47,17 +48,18 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                     ])
                 }
             };
-            
+
             // Generate variables if present
             let variables_expr = if server.variables.is_empty() {
                 quote! { None }
             } else {
-                let var_code: Vec<TokenStream> = server.variables
+                let var_code: Vec<TokenStream> = server
+                    .variables
                     .iter()
                     .map(|var| {
                         let var_name = &var.name;
                         let var_name_str = var_name.value();
-                        
+
                         let default_expr = var.default.as_ref().map_or_else(
                             || quote! { None },
                             |default| {
@@ -65,7 +67,7 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                                 quote! { Some(#default_str.to_string()) }
                             },
                         );
-                        
+
                         let description_expr = var.description.as_ref().map_or_else(
                             || quote! { None },
                             |desc| {
@@ -73,11 +75,12 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                                 quote! { Some(#desc_str.to_string()) }
                             },
                         );
-                        
+
                         let enum_expr = var.enum_values.as_ref().map_or_else(
                             || quote! { None },
                             |enum_vals| {
-                                let enum_strs: Vec<String> = enum_vals.iter().map(|v| v.value()).collect();
+                                let enum_strs: Vec<String> =
+                                    enum_vals.iter().map(syn::LitStr::value).collect();
                                 quote! {
                                     Some(vec![
                                         #(#enum_strs.to_string()),*
@@ -85,11 +88,12 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                                 }
                             },
                         );
-                        
+
                         let examples_expr = var.examples.as_ref().map_or_else(
                             || quote! { None },
                             |examples| {
-                                let example_strs: Vec<String> = examples.iter().map(|v| v.value()).collect();
+                                let example_strs: Vec<String> =
+                                    examples.iter().map(syn::LitStr::value).collect();
                                 quote! {
                                     Some(vec![
                                         #(#example_strs.to_string()),*
@@ -97,32 +101,31 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                                 }
                             },
                         );
-                        
+
+                        let var_name_str_lit = var_name_str;
                         quote! {
-                            (
-                                #var_name_str.to_string(),
+                            vars.insert(
+                                #var_name_str_lit.to_string(),
                                 protofolio::ServerVariable {
                                     enum_values: #enum_expr,
                                     default: #default_expr,
                                     description: #description_expr,
                                     examples: #examples_expr,
                                 }
-                            )
+                            );
                         }
                     })
                     .collect();
-                
+
                 quote! {
                     {
                         let mut vars = std::collections::HashMap::new();
-                        #(
-                            vars.insert(#var_code);
-                        )*
+                        #(#var_code)*
                         Some(vars)
                     }
                 }
             };
-            
+
             quote! {
                 builder = builder.server(
                     #name_lit.to_string(),
@@ -158,7 +161,7 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         quote! { Some(#desc_str.to_string()) }
                     },
                 );
-                
+
                 let scheme_expr = match scheme_type.as_str() {
                     "userPassword" => {
                         quote! {
@@ -183,7 +186,9 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     "http" => {
-                        let scheme_val = scheme.scheme.as_ref().expect("http security scheme requires 'scheme' attribute (e.g., 'basic', 'bearer')");
+                        let scheme_val = scheme.scheme.as_ref().unwrap_or_else(|| {
+                            panic!("http security scheme requires 'scheme' attribute (e.g., 'basic', 'bearer')")
+                        });
                         let scheme_str = scheme_val.value();
                         let bearer_format_expr = scheme.bearer_format.as_ref().map_or_else(
                             || quote! { None },
@@ -201,9 +206,13 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     "httpApiKey" => {
-                        let name_param = scheme.name_param.as_ref().expect("httpApiKey security scheme requires 'name_param' attribute");
+                        let name_param = scheme.name_param.as_ref().unwrap_or_else(|| {
+                            panic!("httpApiKey security scheme requires 'name_param' attribute")
+                        });
                         let name_param_str = name_param.value();
-                        let in_val = scheme.in_.as_ref().expect("httpApiKey security scheme requires 'in' attribute (e.g., 'header', 'query', 'cookie')");
+                        let in_val = scheme.in_.as_ref().unwrap_or_else(|| {
+                            panic!("httpApiKey security scheme requires 'in' attribute (e.g., 'header', 'query', 'cookie')")
+                        });
                         let in_str = in_val.value();
                         quote! {
                             protofolio::SecurityScheme::HttpApiKey {
@@ -214,7 +223,9 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     "openIdConnect" => {
-                        let oidc_url = scheme.open_id_connect_url.as_ref().expect("openIdConnect security scheme requires 'open_id_connect_url' attribute");
+                        let oidc_url = scheme.open_id_connect_url.as_ref().unwrap_or_else(|| {
+                            panic!("openIdConnect security scheme requires 'open_id_connect_url' attribute")
+                        });
                         let oidc_url_str = oidc_url.value();
                         quote! {
                             protofolio::SecurityScheme::OpenIdConnect {
@@ -274,7 +285,7 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                 };
-                
+
                 quote! {
                     security_schemes_map.insert(
                         #name_lit.value().to_string(),
@@ -283,7 +294,7 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                 }
             })
             .collect();
-        
+
         quote! {
             let mut security_schemes_map: std::collections::HashMap<String, protofolio::SecurityScheme> = std::collections::HashMap::new();
             #(#scheme_code)*
@@ -302,6 +313,7 @@ pub fn generate_channels_code(channels: &[syn::LitStr]) -> Vec<TokenStream> {
                 channels_map.insert(
                     #channel_name_lit.to_string(),
                     Channel {
+                        address: #channel_name_lit.to_string(),
                         description: None,
                         messages: HashMap::new(),
                         servers: None,
@@ -366,7 +378,7 @@ pub fn generate_impl_block(
                 use std::collections::HashMap;
                 use serde_json::json;
                 use schemars::JsonSchema;
-                
+
                 let mut builder = AsyncApiBuilder::new()
                     .info(Info {
                         title: #info_title.to_string(),
@@ -374,35 +386,35 @@ pub fn generate_impl_block(
                         description: #info_desc_expr,
                         external_docs: #info_external_docs_expr,
                     });
-                
+
                 // Add servers
                 #(#servers)*
-                
+
                 // Generate security schemes
                 #security_schemes_code
-                
+
                 // Build channels with messages
                 let mut channels_map: HashMap<String, Channel> = HashMap::new();
-                
+
                 // Initialize channels
                 #(#channels)*
-                
+
                 // Add messages to channels
                 #(#messages)*
-                
+
                 // Build operations
                 #operations_code
-                
+
                 // Add channels to builder
                 for (name, channel) in channels_map {
                     builder = builder.channel(name, channel);
                 }
-                
+
                 let mut spec = builder.build();
-                
+
                 // Add operations to spec if any
                 spec.operations = operations_map;
-                
+
                 // Add security schemes to components if any
                 if let Some(ref schemes) = security_schemes_map {
                     if spec.components.is_none() {
@@ -412,16 +424,16 @@ pub fn generate_impl_block(
                         components.security_schemes = Some(schemes.clone());
                     }
                 }
-                
+
                 spec
             }
-            
+
             fn try_asyncapi() -> Result<protofolio::AsyncApiSpec, protofolio::ValidationError> {
                 use protofolio::{AsyncApiBuilder, Info, Server, Channel, Message, MessagePayload, Operation, schema_for_type, ValidationError};
                 use std::collections::HashMap;
                 use serde_json::json;
                 use schemars::JsonSchema;
-                
+
                 let mut builder = AsyncApiBuilder::new()
                     .info(Info {
                         title: #info_title.to_string(),
@@ -429,35 +441,35 @@ pub fn generate_impl_block(
                         description: #info_desc_expr,
                         external_docs: #info_external_docs_expr,
                     });
-                
+
                 // Add servers
                 #(#servers)*
-                
+
                 // Generate security schemes
                 #security_schemes_code
-                
+
                 // Build channels with messages
                 let mut channels_map: HashMap<String, Channel> = HashMap::new();
-                
+
                 // Initialize channels
                 #(#channels)*
-                
+
                 // Add messages to channels (with error handling)
                 #(#messages_try)*
-                
+
                 // Build operations (with error handling)
                 #operations_code_try
-                
+
                 // Add channels to builder
                 for (name, channel) in channels_map {
                     builder = builder.channel(name, channel);
                 }
-                
+
                 let mut spec = builder.build();
-                
+
                 // Add operations to spec if any
                 spec.operations = operations_map;
-                
+
                 // Add security schemes to components if any
                 if let Some(ref schemes) = security_schemes_map {
                     if spec.components.is_none() {
@@ -467,13 +479,12 @@ pub fn generate_impl_block(
                         components.security_schemes = Some(schemes.clone());
                     }
                 }
-                
+
                 // Validate the spec
                 protofolio::validate_spec(&spec)?;
-                
+
                 Ok(spec)
             }
         }
     }
 }
-

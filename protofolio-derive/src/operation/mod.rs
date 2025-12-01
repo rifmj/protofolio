@@ -5,7 +5,10 @@ mod codegen;
 
 use crate::operation::{
     attrs::OperationAttrs,
-    codegen::{generate_external_docs_code, generate_impl_block, generate_optional_field_code, generate_tags_code},
+    codegen::{
+        generate_external_docs_code, generate_impl_block, generate_optional_field_code,
+        generate_tags_code,
+    },
 };
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
@@ -129,4 +132,3 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
         external_docs_opt,
     ))
 }
-

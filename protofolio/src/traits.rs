@@ -1,7 +1,7 @@
 //! Traits for AsyncAPI specification generation
 
-use crate::spec::{AsyncApiSpec, Operation};
 use crate::error::ValidationError;
+use crate::spec::{AsyncApiSpec, Operation};
 
 /// Main trait for types that can generate an AsyncAPI specification
 ///
@@ -145,37 +145,37 @@ pub trait AsyncApi {
 pub trait AsyncApiOperation {
     /// Get the operation ID
     fn operation_id() -> &'static str;
-    
+
     /// Get the action (send or receive)
     fn action() -> &'static str;
-    
+
     /// Get the channel name
     fn channel() -> &'static str;
-    
+
     /// Get the message type names
     fn message_types() -> &'static [&'static str];
-    
+
     /// Get the message names for use in AsyncAPI spec
     fn message_names() -> Vec<String>;
-    
+
     /// Get the summary
     fn summary() -> Option<&'static str>;
-    
+
     /// Get the description
     fn description() -> Option<&'static str>;
-    
+
     /// Get the tags
     fn tags() -> Option<Vec<crate::spec::Tag>>;
-    
+
     /// Get the external documentation
     fn external_docs() -> Option<crate::spec::ExternalDocumentation> {
         None
     }
-    
+
     /// Convert this operation to an Operation struct
     fn to_operation() -> Operation {
         use crate::spec::{ChannelReference, MessageReference};
-        
+
         let channel_ref = format!("#/channels/{}", Self::channel());
         let message_refs: Vec<MessageReference> = Self::message_names()
             .iter()
@@ -184,10 +184,13 @@ pub trait AsyncApiOperation {
                 MessageReference { ref_path }
             })
             .collect();
-        
+
         Operation {
+            operation_id: Self::operation_id().to_string(),
             action: Self::action().to_string(),
-            channel: ChannelReference { ref_path: channel_ref },
+            channel: ChannelReference {
+                ref_path: channel_ref,
+            },
             messages: message_refs,
             summary: Self::summary().map(|s| s.to_string()),
             description: Self::description().map(|s| s.to_string()),

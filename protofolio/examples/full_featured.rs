@@ -8,7 +8,7 @@
 //! - Error handling with try_asyncapi()
 //! - Validation
 
-use protofolio::{AsyncApi, validate_spec};
+use protofolio::{validate_spec, AsyncApi};
 use protofolio_derive::{AsyncApi, AsyncApiMessage, AsyncApiOperation};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -167,12 +167,17 @@ fn main() {
             // Display some statistics
             println!("\n=== Specification Statistics ===");
             println!("Channels: {}", spec.channels.len());
-            println!("Operations: {}", spec.operations.as_ref().map(|ops| ops.len()).unwrap_or(0));
-            println!("Servers: {}", spec.servers.as_ref().map(|srv| srv.len()).unwrap_or(0));
+            println!(
+                "Operations: {}",
+                spec.operations.as_ref().map(|ops| ops.len()).unwrap_or(0)
+            );
+            println!(
+                "Servers: {}",
+                spec.servers.as_ref().map(|srv| srv.len()).unwrap_or(0)
+            );
         }
         Err(e) => {
             eprintln!("✗ Failed to generate specification: {}", e);
         }
     }
 }
-

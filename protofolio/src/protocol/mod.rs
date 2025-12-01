@@ -26,37 +26,34 @@
 //! this module. See individual protocol modules for protocol-specific bindings
 //! and configuration options.
 
-mod traits;
 mod bindings;
+mod traits;
 
-#[cfg(feature = "nats")]
-pub mod nats;
 #[cfg(feature = "kafka")]
 pub mod kafka;
 #[cfg(feature = "mqtt")]
 pub mod mqtt;
+#[cfg(feature = "nats")]
+pub mod nats;
 
-pub use traits::*;
 pub use bindings::*;
+pub use traits::*;
 
 // Re-exports for convenience (conditional on features)
-#[cfg(feature = "nats")]
-pub use nats::{NatsProtocol, PROTOCOL as NATS_PROTOCOL, DEFAULT_PORT as NATS_DEFAULT_PORT};
 #[cfg(feature = "kafka")]
-pub use kafka::{KafkaProtocol, PROTOCOL as KAFKA_PROTOCOL, DEFAULT_PORT as KAFKA_DEFAULT_PORT};
+pub use kafka::{KafkaProtocol, DEFAULT_PORT as KAFKA_DEFAULT_PORT, PROTOCOL as KAFKA_PROTOCOL};
 #[cfg(feature = "mqtt")]
 pub use mqtt::{
-    MqttProtocol, 
-    PROTOCOL as MQTT_PROTOCOL, 
-    DEFAULT_PORT as MQTT_DEFAULT_PORT,
-    DEFAULT_SECURE_PORT as MQTT_DEFAULT_SECURE_PORT,
-    MqttQos,
+    MqttProtocol, MqttQos, DEFAULT_PORT as MQTT_DEFAULT_PORT,
+    DEFAULT_SECURE_PORT as MQTT_DEFAULT_SECURE_PORT, PROTOCOL as MQTT_PROTOCOL,
 };
+#[cfg(feature = "nats")]
+pub use nats::{NatsProtocol, DEFAULT_PORT as NATS_DEFAULT_PORT, PROTOCOL as NATS_PROTOCOL};
 
 /// Validate protocol identifier
 pub fn validate_protocol(protocol: &str) -> Result<(), crate::error::ValidationError> {
     let mut supported = Vec::new();
-    
+
     #[cfg(feature = "nats")]
     {
         if protocol == NATS_PROTOCOL {
@@ -64,7 +61,7 @@ pub fn validate_protocol(protocol: &str) -> Result<(), crate::error::ValidationE
         }
         supported.push(NATS_PROTOCOL.to_string());
     }
-    
+
     #[cfg(feature = "kafka")]
     {
         if protocol == KAFKA_PROTOCOL {
@@ -72,7 +69,7 @@ pub fn validate_protocol(protocol: &str) -> Result<(), crate::error::ValidationE
         }
         supported.push(KAFKA_PROTOCOL.to_string());
     }
-    
+
     #[cfg(feature = "mqtt")]
     {
         if protocol == MQTT_PROTOCOL {
@@ -80,10 +77,9 @@ pub fn validate_protocol(protocol: &str) -> Result<(), crate::error::ValidationE
         }
         supported.push(MQTT_PROTOCOL.to_string());
     }
-    
+
     Err(crate::error::ValidationError::UnsupportedProtocol {
         protocol: protocol.to_string(),
         supported,
     })
 }
-

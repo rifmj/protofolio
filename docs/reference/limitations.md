@@ -89,13 +89,15 @@ pub struct MyApi;
 
 Not all AsyncAPI 3.0 features are supported yet:
 
-- ❌ Components and `$ref` references (planned)
+- ✅ Components and `$ref` references
 - ✅ Security schemes
 - ✅ External documentation
 - ✅ Server variables
 - ✅ Message examples
 - ✅ Message headers
-- ❌ Correlation IDs (planned)
+- ✅ Correlation IDs
+- ✅ Channel address field
+- ✅ Operation ID field
 
 See the [Status](https://github.com/rifmj/protofolio#status) section in the README for current feature support.
 
@@ -139,12 +141,12 @@ Schema generation is automatically cached by type, but the first generation can 
 Potential future enhancements:
 
 - Full compile-time channel validation using const generics or other Rust features
-- Support for AsyncAPI 3.0 components and references
-- Additional protocol support (Kafka, MQTT, AMQP)
+- Additional protocol support (AMQP, WebSocket, etc.)
 - Enhanced schema customization options
 - Better error messages with suggestions
 - IDE support and autocompletion
 - CLI tool for validation and generation
+- Macro support for defining components (currently only via builder API)
 
 ## See Also
 

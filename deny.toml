@@ -3,19 +3,11 @@
 
 # Advisory database configuration
 [advisories]
-# Deny known vulnerabilities
-vulnerability = "deny"
-# Warn on unmaintained crates
-unmaintained = "warn"
-# Warn on notices (informational advisories)
-notice = "warn"
 # Ignore advisories for specific crates (if needed)
 ignore = []
 
 # License configuration
 [licenses]
-# Default policy: deny unknown licenses
-default = "deny"
 # Allow these licenses
 allow = [
     "MIT",
@@ -27,18 +19,15 @@ allow = [
     "Zlib",
     "Unlicense",
     "CC0-1.0",
+    "Unicode-3.0",
 ]
-# Deny these licenses (if any)
-deny = []
-# Copyleft licenses that are allowed but should be flagged
-copyleft = "warn"
 # Allow licenses for specific crates (if needed)
 exceptions = []
 
 # Banned dependencies
 [bans]
 # Multiple versions of the same crate
-multiple_versions = "warn"
+multiple-versions = "warn"
 # Wildcard dependencies
 wildcards = "deny"
 # Skip specific crates from duplicate version checks
@@ -46,24 +35,11 @@ skip = []
 
 # Sources configuration
 [sources]
-# Allow crates.io
-crates-io = true
-# Allow git repositories
-git = true
-# Allow local registries
-registry = true
-# Allow local paths
-path = true
-# Allow unknown sources
+# Deny unknown registries
 unknown-registry = "deny"
-# Allow unknown git sources
+# Deny unknown git sources
 unknown-git = "deny"
-
-# Allow specific sources (if needed)
-allow-registry = []
+# Allow crates.io registry
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# Allow specific git sources (if needed)
 allow-git = []
-
-# Skip specific sources from checks
-skip-registry = []
-skip-git = []
-

@@ -4,14 +4,8 @@
 //! Use the `protofolio-derive` crate for procedural macros.
 //!
 //! Lints are configured in the workspace Cargo.toml and inherited here.
-#![deny(
-    rustdoc::broken_intra_doc_links,
-    unsafe_code
-)]
-#![warn(
-    missing_docs,
-    missing_debug_implementations
-)]
+#![deny(rustdoc::broken_intra_doc_links, unsafe_code)]
+#![warn(missing_docs, missing_debug_implementations)]
 #![allow(
     // Documentation - can be fixed incrementally
     clippy::missing_docs_in_private_items,
@@ -68,44 +62,43 @@
 //! See the [README](../README.md) for complete documentation and examples.
 
 // Core modules
+mod builder;
 mod error;
-mod types;
+mod internal;
+mod protocol;
+mod schema;
 mod spec;
 mod traits;
-mod builder;
-mod schema;
+mod types;
 mod validation;
-mod protocol;
-mod internal;
 
 // Public API - carefully curated exports
+pub use builder::AsyncApiBuilder;
 pub use error::{SchemaError, ValidationError};
-pub use types::OperationAction;
+pub use schema::{generate_schema, schema_for_type};
 pub use spec::*;
 pub use traits::{AsyncApi, AsyncApiOperation};
-pub use builder::AsyncApiBuilder;
-pub use schema::{generate_schema, schema_for_type};
+pub use types::OperationAction;
 pub use validation::validate_spec;
 // Protocol exports (conditional on features)
 pub use protocol::Protocol;
 
 #[cfg(feature = "nats")]
 pub use protocol::{
-    NatsProtocol, NATS_PROTOCOL, NATS_DEFAULT_PORT,
-    NatsChannelBinding, NatsChannelConfig, NatsMessageBinding, NatsMessageConfig,
+    NatsChannelBinding, NatsChannelConfig, NatsMessageBinding, NatsMessageConfig, NatsProtocol,
+    NATS_DEFAULT_PORT, NATS_PROTOCOL,
 };
 
 #[cfg(feature = "kafka")]
 pub use protocol::{
-    KafkaProtocol, KAFKA_PROTOCOL, KAFKA_DEFAULT_PORT,
     KafkaChannelBinding, KafkaChannelConfig, KafkaMessageBinding, KafkaMessageConfig,
+    KafkaProtocol, KAFKA_DEFAULT_PORT, KAFKA_PROTOCOL,
 };
 
 #[cfg(feature = "mqtt")]
 pub use protocol::{
-    MqttProtocol, MQTT_PROTOCOL, MQTT_DEFAULT_PORT, MQTT_DEFAULT_SECURE_PORT,
-    MqttQos,
-    MqttChannelBinding, MqttChannelConfig, MqttMessageBinding, MqttMessageConfig,
+    MqttChannelBinding, MqttChannelConfig, MqttMessageBinding, MqttMessageConfig, MqttProtocol,
+    MqttQos, MQTT_DEFAULT_PORT, MQTT_DEFAULT_SECURE_PORT, MQTT_PROTOCOL,
 };
 
 /// Convert an AsyncAPI specification to YAML string

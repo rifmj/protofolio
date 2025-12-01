@@ -111,4 +111,3 @@ fn main() {
     println!("✓ Set appropriate retention policies based on use case");
     println!("✓ Consider replication factor for fault tolerance");
 }
-

@@ -33,32 +33,23 @@ impl Parse for ServerVariableAttrs {
             let ident: syn::Ident = input.parse()?;
             let ident_str = ident.to_string();
 
-            if ident_str == "enum" || ident_str == "enum_values" {
+            if ident_str == "enum" || ident_str == "enum_values" || ident_str == "examples" {
                 input.parse::<Token![=]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let mut enum_list = Vec::new();
+                let mut list = Vec::new();
                 while !content.is_empty() {
-                    let enum_val: LitStr = content.parse()?;
-                    enum_list.push(enum_val);
+                    let val: LitStr = content.parse()?;
+                    list.push(val);
                     if content.peek(Token![,]) {
                         content.parse::<Token![,]>()?;
                     }
                 }
-                enum_values = Some(enum_list);
-            } else if ident_str == "examples" {
-                input.parse::<Token![=]>()?;
-                let content;
-                syn::bracketed!(content in input);
-                let mut examples_list = Vec::new();
-                while !content.is_empty() {
-                    let example_val: LitStr = content.parse()?;
-                    examples_list.push(example_val);
-                    if content.peek(Token![,]) {
-                        content.parse::<Token![,]>()?;
-                    }
+                if ident_str == "enum" || ident_str == "enum_values" {
+                    enum_values = Some(list);
+                } else {
+                    examples = Some(list);
                 }
-                examples = Some(examples_list);
             } else {
                 input.parse::<Token![=]>()?;
                 let lit: LitStr = input.parse()?;
@@ -103,29 +94,28 @@ impl Parse for ServerAttrs {
             let ident: syn::Ident = input.parse()?;
             let ident_str = ident.to_string();
 
-            if ident_str == "security" {
+            if ident_str == "security" || ident_str == "variables" {
                 input.parse::<Token![=]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let mut req_list = Vec::new();
-                while !content.is_empty() {
-                    let scheme_name: LitStr = content.parse()?;
-                    req_list.push(scheme_name);
-                    if content.peek(Token![,]) {
-                        content.parse::<Token![,]>()?;
+                if ident_str == "security" {
+                    let mut req_list = Vec::new();
+                    while !content.is_empty() {
+                        let scheme_name: LitStr = content.parse()?;
+                        req_list.push(scheme_name);
+                        if content.peek(Token![,]) {
+                            content.parse::<Token![,]>()?;
+                        }
                     }
-                }
-                security.push(req_list);
-            } else if ident_str == "variables" {
-                input.parse::<Token![=]>()?;
-                let content;
-                syn::bracketed!(content in input);
-                while !content.is_empty() {
-                    let var_content;
-                    syn::parenthesized!(var_content in content);
-                    variables.push(var_content.parse()?);
-                    if content.peek(Token![,]) {
-                        content.parse::<Token![,]>()?;
+                    security.push(req_list);
+                } else {
+                    while !content.is_empty() {
+                        let var_content;
+                        syn::parenthesized!(var_content in content);
+                        variables.push(var_content.parse()?);
+                        if content.peek(Token![,]) {
+                            content.parse::<Token![,]>()?;
+                        }
                     }
                 }
             } else {

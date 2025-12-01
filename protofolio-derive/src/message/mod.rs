@@ -6,8 +6,9 @@ mod codegen;
 use crate::message::{
     attrs::MessageAttrs,
     codegen::{
-        generate_examples_code, generate_external_docs_code, generate_headers_code,
-        generate_impl_block, generate_optional_field_code, generate_tags_code,
+        generate_correlation_id_code, generate_examples_code, generate_external_docs_code,
+        generate_headers_code, generate_impl_block, generate_optional_field_code,
+        generate_tags_code,
     },
 };
 use proc_macro2::TokenStream;
@@ -32,6 +33,7 @@ pub fn derive_asyncapi_message(input: DeriveInput) -> Result<TokenStream, Error>
     let mut example = None;
     let mut examples = None;
     let mut headers = None;
+    let mut correlation_id = None;
 
     for attr in &input.attrs {
         if attr.path().is_ident("asyncapi") {
@@ -61,6 +63,7 @@ pub fn derive_asyncapi_message(input: DeriveInput) -> Result<TokenStream, Error>
                     example = attrs.example;
                     examples = attrs.examples;
                     headers = attrs.headers;
+                    correlation_id = attrs.correlation_id;
                 }
                 Err(e) => {
                     abort!(
@@ -95,6 +98,7 @@ pub fn derive_asyncapi_message(input: DeriveInput) -> Result<TokenStream, Error>
     let external_docs_opt = generate_external_docs_code(&external_docs);
     let examples_opt = generate_examples_code(&example, &examples);
     let headers_opt = generate_headers_code(&headers);
+    let correlation_id_opt = generate_correlation_id_code(&correlation_id);
 
     // Generate code that stores metadata
     Ok(generate_impl_block(
@@ -110,5 +114,6 @@ pub fn derive_asyncapi_message(input: DeriveInput) -> Result<TokenStream, Error>
         external_docs_opt,
         examples_opt,
         headers_opt,
+        correlation_id_opt,
     ))
 }

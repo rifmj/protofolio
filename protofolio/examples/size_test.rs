@@ -32,4 +32,3 @@ fn main() {
     let json = protofolio::to_json(&spec).unwrap();
     println!("Generated spec size: {} bytes", json.len());
 }
-

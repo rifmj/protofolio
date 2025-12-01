@@ -97,22 +97,93 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
         }
 
         // Validate messages in channel
-        for (message_name, message) in &channel.messages {
-            // Basic message validation - ensure payload schema exists
-            if message.payload.schema.is_null() {
-                return Err(ValidationError::InvalidSchema(format!(
-                    "Message '{}' in channel '{}' has null schema",
-                    message_name, channel_name
-                )));
-            }
+        for (message_name, message_or_ref) in &channel.messages {
+            match message_or_ref {
+                crate::spec::MessageOrRef::Message(message) => {
+                    // Basic message validation - ensure payload schema exists
+                    if message.payload.schema.is_null() {
+                        return Err(ValidationError::InvalidSchema(format!(
+                            "Message '{}' in channel '{}' has null schema",
+                            message_name, channel_name
+                        )));
+                    }
 
-            // Check for duplicate message IDs
-            if let Some(ref msg_id) = message.message_id {
-                if !message_ids.insert(msg_id.clone()) {
-                    return Err(ValidationError::DuplicateMessageId(format!(
-                        "Message ID '{}' is used by multiple messages. Each message must have a unique messageId. Found in channel '{}', message '{}'",
-                        msg_id, channel_name, message_name
-                    )));
+                    // Check for duplicate message IDs
+                    if let Some(ref msg_id) = message.message_id {
+                        if !message_ids.insert(msg_id.clone()) {
+                            return Err(ValidationError::DuplicateMessageId(format!(
+                                "Message ID '{}' is used by multiple messages. Each message must have a unique messageId. Found in channel '{}', message '{}'",
+                                msg_id, channel_name, message_name
+                            )));
+                        }
+                    }
+
+                    // Also check message IDs in component messages if this message references one
+                    // (This will be handled when we validate components)
+                }
+                crate::spec::MessageOrRef::Ref(msg_ref) => {
+                    // Validate component reference exists
+                    if msg_ref.ref_path.starts_with("#/components/messages/") {
+                        let component_name = msg_ref
+                            .ref_path
+                            .strip_prefix("#/components/messages/")
+                            .unwrap_or("");
+
+                        // Check if component exists
+                        if let Some(ref components) = spec.components {
+                            if let Some(ref messages) = components.messages {
+                                if !messages.contains_key(component_name) {
+                                    return Err(ValidationError::InvalidSchema(format!(
+                                        "Message '{}' in channel '{}' references component '{}' which does not exist in components.messages",
+                                        message_name, channel_name, component_name
+                                    )));
+                                }
+                            } else {
+                                return Err(ValidationError::InvalidSchema(format!(
+                                    "Message '{}' in channel '{}' references component '{}' but no components.messages are defined",
+                                    message_name, channel_name, component_name
+                                )));
+                            }
+                        } else {
+                            return Err(ValidationError::InvalidSchema(format!(
+                                "Message '{}' in channel '{}' references component '{}' but no components section is defined",
+                                message_name, channel_name, component_name
+                            )));
+                        }
+                    } else if msg_ref.ref_path.starts_with("#/channels/") {
+                        // Channel message reference - validate it exists
+                        // Extract channel and message name from path like "#/channels/{channel}/messages/{message}"
+                        let path_parts: Vec<&str> = msg_ref
+                            .ref_path
+                            .strip_prefix("#/channels/")
+                            .unwrap_or("")
+                            .split("/messages/")
+                            .collect();
+
+                        if path_parts.len() == 2 {
+                            let ref_channel = path_parts[0];
+                            let ref_message = path_parts[1];
+
+                            if let Some(ref_channel_obj) = spec.channels.get(ref_channel) {
+                                if !ref_channel_obj.messages.contains_key(ref_message) {
+                                    return Err(ValidationError::InvalidSchema(format!(
+                                        "Message '{}' in channel '{}' references message '{}' in channel '{}' which does not exist",
+                                        message_name, channel_name, ref_message, ref_channel
+                                    )));
+                                }
+                            } else {
+                                return Err(ValidationError::InvalidSchema(format!(
+                                    "Message '{}' in channel '{}' references channel '{}' which does not exist",
+                                    message_name, channel_name, ref_channel
+                                )));
+                            }
+                        }
+                    } else {
+                        return Err(ValidationError::InvalidSchema(format!(
+                            "Invalid message reference format in channel '{}', message '{}': {}. Expected '#/components/messages/...' or '#/channels/.../messages/...'",
+                            channel_name, message_name, msg_ref.ref_path
+                        )));
+                    }
                 }
             }
         }
@@ -130,11 +201,45 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
 
             // Validate message references
             for msg_ref in &op.messages {
-                if !msg_ref.ref_path.starts_with("#/channels/") {
+                // Message references can point to:
+                // - Channel messages: "#/channels/{channel}/messages/{message}"
+                // - Component messages: "#/components/messages/{message}"
+                if !msg_ref.ref_path.starts_with("#/channels/")
+                    && !msg_ref.ref_path.starts_with("#/components/messages/")
+                {
                     return Err(ValidationError::InvalidSchema(format!(
-                        "Invalid message reference format in operation '{}': {}",
+                        "Invalid message reference format in operation '{}': {}. Expected '#/channels/.../messages/...' or '#/components/messages/...'",
                         op_id, msg_ref.ref_path
                     )));
+                }
+
+                // If it's a component reference, validate it exists
+                if msg_ref.ref_path.starts_with("#/components/messages/") {
+                    let component_name = msg_ref
+                        .ref_path
+                        .strip_prefix("#/components/messages/")
+                        .unwrap_or("");
+
+                    if let Some(ref components) = spec.components {
+                        if let Some(ref messages) = components.messages {
+                            if !messages.contains_key(component_name) {
+                                return Err(ValidationError::InvalidSchema(format!(
+                                    "Operation '{}' references component message '{}' which does not exist in components.messages",
+                                    op_id, component_name
+                                )));
+                            }
+                        } else {
+                            return Err(ValidationError::InvalidSchema(format!(
+                                "Operation '{}' references component message '{}' but no components.messages are defined",
+                                op_id, component_name
+                            )));
+                        }
+                    } else {
+                        return Err(ValidationError::InvalidSchema(format!(
+                            "Operation '{}' references component message '{}' but no components section is defined",
+                            op_id, component_name
+                        )));
+                    }
                 }
             }
         }
@@ -166,6 +271,31 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
         }
     }
 
+    // Validate component messages (check for duplicate message IDs across components)
+    if let Some(ref components) = spec.components {
+        if let Some(ref messages) = components.messages {
+            for (component_name, message) in messages {
+                // Validate component message has valid schema
+                if message.payload.schema.is_null() {
+                    return Err(ValidationError::InvalidSchema(format!(
+                        "Component message '{}' has null schema",
+                        component_name
+                    )));
+                }
+
+                // Check for duplicate message IDs in components
+                if let Some(ref msg_id) = message.message_id {
+                    if !message_ids.insert(msg_id.clone()) {
+                        return Err(ValidationError::DuplicateMessageId(format!(
+                            "Message ID '{}' is used by multiple messages. Found in component message '{}'",
+                            msg_id, component_name
+                        )));
+                    }
+                }
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -187,12 +317,14 @@ mod tests {
             .channel(
                 "test.channel".to_string(),
                 Channel {
+                    address: "test.channel".to_string(),
                     description: None,
                     messages: {
+                        use crate::spec::MessageOrRef;
                         let mut m = HashMap::new();
                         m.insert(
                             "TestMessage".to_string(),
-                            Message {
+                            MessageOrRef::Message(Message {
                                 message_id: None,
                                 name: None,
                                 title: None,
@@ -206,7 +338,8 @@ mod tests {
                                 },
                                 examples: None,
                                 headers: None,
-                            },
+                                correlation_id: None,
+                            }),
                         );
                         m
                     },
@@ -266,12 +399,14 @@ mod tests {
             .channel(
                 "test.channel".to_string(),
                 Channel {
+                    address: "test.channel".to_string(),
                     description: None,
                     messages: {
+                        use crate::spec::MessageOrRef;
                         let mut m = HashMap::new();
                         m.insert(
                             "TestMessage".to_string(),
-                            Message {
+                            MessageOrRef::Message(Message {
                                 message_id: None,
                                 name: None,
                                 title: None,
@@ -285,7 +420,8 @@ mod tests {
                                 },
                                 examples: None,
                                 headers: None,
-                            },
+                                correlation_id: None,
+                            }),
                         );
                         m
                     },
@@ -314,6 +450,7 @@ mod tests {
             .channel(
                 "test.channel".to_string(),
                 Channel {
+                    address: "empty.channel".to_string(),
                     description: None,
                     messages: HashMap::new(),
                     servers: None,
@@ -343,10 +480,11 @@ mod tests {
                 Channel {
                     description: None,
                     messages: {
+                        use crate::spec::MessageOrRef;
                         let mut m = HashMap::new();
                         m.insert(
                             "Message1".to_string(),
-                            Message {
+                            MessageOrRef::Message(Message {
                                 message_id: Some("duplicate-id".to_string()),
                                 name: None,
                                 title: None,
@@ -360,11 +498,12 @@ mod tests {
                                 },
                                 examples: None,
                                 headers: None,
-                            },
+                                correlation_id: None,
+                            }),
                         );
                         m.insert(
                             "Message2".to_string(),
-                            Message {
+                            MessageOrRef::Message(Message {
                                 message_id: Some("duplicate-id".to_string()),
                                 name: None,
                                 title: None,
@@ -378,7 +517,8 @@ mod tests {
                                 },
                                 examples: None,
                                 headers: None,
-                            },
+                                correlation_id: None,
+                            }),
                         );
                         m
                     },
@@ -393,5 +533,184 @@ mod tests {
             validate_spec(&spec),
             Err(ValidationError::DuplicateMessageId(_))
         ));
+    }
+
+    #[test]
+    fn test_validate_component_message_ref() {
+        use crate::spec::{MessageOrRef, MessageReference};
+
+        let spec = AsyncApiBuilder::new()
+            .info(Info {
+                title: "Test".to_string(),
+                version: "1.0.0".to_string(),
+                description: None,
+                external_docs: None,
+            })
+            .component_message(
+                "CommonMessage".to_string(),
+                Message {
+                    message_id: Some("common-v1".to_string()),
+                    name: Some("CommonMessage".to_string()),
+                    title: None,
+                    summary: None,
+                    description: None,
+                    content_type: None,
+                    tags: None,
+                    external_docs: None,
+                    payload: MessagePayload {
+                        schema: serde_json::json!({"type": "object"}),
+                    },
+                    examples: None,
+                    headers: None,
+                },
+            )
+            .channel(
+                "test.channel".to_string(),
+                Channel {
+                    address: "common.channel".to_string(),
+                    description: None,
+                    messages: {
+                        let mut m = HashMap::new();
+                        m.insert(
+                            "CommonMessage".to_string(),
+                            MessageOrRef::component_ref("CommonMessage"),
+                        );
+                        m
+                    },
+                    servers: None,
+                    parameters: None,
+                    bindings: None,
+                },
+            )
+            .build();
+
+        assert!(validate_spec(&spec).is_ok());
+    }
+
+    #[test]
+    fn test_validate_invalid_component_ref() {
+        use crate::spec::MessageOrRef;
+
+        let spec = AsyncApiBuilder::new()
+            .info(Info {
+                title: "Test".to_string(),
+                version: "1.0.0".to_string(),
+                description: None,
+                external_docs: None,
+            })
+            .channel(
+                "test.channel".to_string(),
+                Channel {
+                    address: "ref.channel".to_string(),
+                    description: None,
+                    messages: {
+                        let mut m = HashMap::new();
+                        m.insert(
+                            "NonExistent".to_string(),
+                            MessageOrRef::component_ref("NonExistent"),
+                        );
+                        m
+                    },
+                    servers: None,
+                    parameters: None,
+                    bindings: None,
+                },
+            )
+            .build();
+
+        assert!(matches!(
+            validate_spec(&spec),
+            Err(ValidationError::InvalidSchema(_))
+        ));
+    }
+
+    #[test]
+    fn test_validate_operation_with_component_ref() {
+        use crate::spec::{ChannelReference, MessageOrRef, MessageReference, Operation};
+        use std::collections::HashMap;
+
+        let mut spec = AsyncApiBuilder::new()
+            .info(Info {
+                title: "Test".to_string(),
+                version: "1.0.0".to_string(),
+                description: None,
+                external_docs: None,
+            })
+            .component_message(
+                "ComponentMsg".to_string(),
+                Message {
+                    message_id: Some("component-v1".to_string()),
+                    name: Some("ComponentMsg".to_string()),
+                    title: None,
+                    summary: None,
+                    description: None,
+                    content_type: None,
+                    tags: None,
+                    external_docs: None,
+                    payload: MessagePayload {
+                        schema: serde_json::json!({"type": "object"}),
+                    },
+                    examples: None,
+                    headers: None,
+                    correlation_id: None,
+                },
+            )
+            .channel(
+                "test.channel".to_string(),
+                Channel {
+                    address: "test.channel".to_string(),
+                    description: None,
+                    messages: {
+                        let mut m = HashMap::new();
+                        m.insert(
+                            "InlineMessage".to_string(),
+                            MessageOrRef::Message(Message {
+                                message_id: None,
+                                name: None,
+                                title: None,
+                                summary: None,
+                                description: None,
+                                content_type: None,
+                                tags: None,
+                                external_docs: None,
+                                payload: MessagePayload {
+                                    schema: serde_json::json!({"type": "object"}),
+                                },
+                                examples: None,
+                                headers: None,
+                                correlation_id: None,
+                            }),
+                        );
+                        m
+                    },
+                    servers: None,
+                    parameters: None,
+                    bindings: None,
+                },
+            )
+            .build();
+
+        // Add operation with component reference
+        let mut operations = HashMap::new();
+        operations.insert(
+            "testOp".to_string(),
+            Operation {
+                operation_id: "test-operation".to_string(),
+                action: "send".to_string(),
+                channel: ChannelReference {
+                    ref_path: "#/channels/test.channel".to_string(),
+                },
+                messages: vec![MessageReference {
+                    ref_path: "#/components/messages/ComponentMsg".to_string(),
+                }],
+                summary: None,
+                description: None,
+                tags: None,
+                external_docs: None,
+            },
+        );
+        spec.operations = Some(operations);
+
+        assert!(validate_spec(&spec).is_ok());
     }
 }

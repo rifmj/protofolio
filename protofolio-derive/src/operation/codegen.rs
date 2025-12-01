@@ -7,10 +7,9 @@ use syn::{Ident, LitStr};
 
 /// Generate optional field code
 pub fn generate_optional_field_code(option: &Option<LitStr>) -> TokenStream {
-    option.as_ref().map_or_else(
-        || quote! { None },
-        |s| quote! { Some(#s) },
-    )
+    option
+        .as_ref()
+        .map_or_else(|| quote! { None }, |s| quote! { Some(#s) })
 }
 
 /// Generate tags code
@@ -110,11 +109,10 @@ pub fn generate_impl_block(
             fn tags() -> Option<Vec<protofolio::Tag>> {
                 #tags_opt
             }
-            
+
             fn external_docs() -> Option<protofolio::ExternalDocumentation> {
                 #external_docs_opt
             }
         }
     }
 }
-

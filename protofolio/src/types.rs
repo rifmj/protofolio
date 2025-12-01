@@ -31,7 +31,10 @@ impl TryFrom<&str> for OperationAction {
         match s {
             "send" => Ok(OperationAction::Send),
             "receive" => Ok(OperationAction::Receive),
-            _ => Err(format!("Invalid operation action: '{}'. Expected 'send' or 'receive'", s)),
+            _ => Err(format!(
+                "Invalid operation action: '{}'. Expected 'send' or 'receive'",
+                s
+            )),
         }
     }
 }
@@ -92,4 +95,3 @@ mod tests {
         assert_eq!(RECEIVE_STR, "receive");
     }
 }
-

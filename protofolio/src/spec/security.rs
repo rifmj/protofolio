@@ -16,7 +16,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// API key authentication
     #[serde(rename = "apiKey")]
     ApiKey {
@@ -27,7 +27,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// HTTP authentication
     #[serde(rename = "http")]
     Http {
@@ -40,7 +40,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// OAuth2 authentication
     #[serde(rename = "oauth2")]
     OAuth2 {
@@ -50,7 +50,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// OpenID Connect authentication
     #[serde(rename = "openIdConnect")]
     OpenIdConnect {
@@ -60,7 +60,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// X.509 certificate authentication
     #[serde(rename = "X509")]
     X509 {
@@ -68,7 +68,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// Symmetric encryption
     #[serde(rename = "symmetricEncryption")]
     SymmetricEncryption {
@@ -76,7 +76,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// Asymmetric encryption
     #[serde(rename = "asymmetricEncryption")]
     AsymmetricEncryption {
@@ -84,7 +84,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// HTTP API key authentication
     #[serde(rename = "httpApiKey")]
     HttpApiKey {
@@ -97,7 +97,7 @@ pub enum SecurityScheme {
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },
-    
+
     /// Mutual TLS authentication
     #[serde(rename = "mutualTLS")]
     MutualTls {
@@ -114,15 +114,15 @@ pub struct OAuth2Flows {
     /// Authorization code flow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_code: Option<OAuth2Flow>,
-    
+
     /// Client credentials flow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_credentials: Option<OAuth2Flow>,
-    
+
     /// Implicit flow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub implicit: Option<OAuth2Flow>,
-    
+
     /// Password flow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<OAuth2Flow>,
@@ -135,15 +135,15 @@ pub struct OAuth2Flow {
     /// Authorization URL
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_url: Option<String>,
-    
+
     /// Token URL
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_url: Option<String>,
-    
+
     /// Refresh URL
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refresh_url: Option<String>,
-    
+
     /// Scopes
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scopes: Option<HashMap<String, String>>,
@@ -151,4 +151,3 @@ pub struct OAuth2Flow {
 
 /// Security requirement (map of scheme name to scopes/requirements)
 pub type SecurityRequirement = HashMap<String, Vec<String>>;
-

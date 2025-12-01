@@ -5,10 +5,7 @@ use quote::quote;
 use syn::Ident;
 
 /// Generate code for operation handling (panic version for asyncapi())
-pub fn generate_operations_code(
-    operations: &[syn::Path],
-    ident: &Ident,
-) -> Vec<TokenStream> {
+pub fn generate_operations_code(operations: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     operations
         .iter()
         .map(|operation_type| {
@@ -18,11 +15,11 @@ pub fn generate_operations_code(
                     const _: () = {
                         const _CHECK: &str = #operation_type_ident::CHANNEL;
                     };
-                    
+
                     use protofolio::AsyncApiOperation;
                     let operation = #operation_type_ident::to_operation();
                     let operation_id = #operation_type_ident::operation_id();
-                    
+
                     let channel_name = #operation_type_ident::channel();
                     if !channels_map.contains_key(channel_name) {
                         let available: Vec<_> = channels_map.keys().collect();
@@ -41,7 +38,7 @@ pub fn generate_operations_code(
                             channel_name
                         );
                     }
-                    
+
                     let channel = channels_map.get(channel_name)
                         .expect(&format!("Channel '{}' should exist (validated above)", channel_name));
                     let message_names = #operation_type_ident::message_names();
@@ -65,7 +62,7 @@ pub fn generate_operations_code(
                             );
                         }
                     }
-                    
+
                     operations_map.insert(operation_id.to_string(), operation);
                 }
             }
@@ -74,10 +71,7 @@ pub fn generate_operations_code(
 }
 
 /// Generate code for operation handling (error-returning version for try_asyncapi())
-pub fn generate_operations_try_code(
-    operations: &[syn::Path],
-    ident: &Ident,
-) -> Vec<TokenStream> {
+pub fn generate_operations_try_code(operations: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     operations
         .iter()
         .map(|operation_type| {
@@ -87,11 +81,11 @@ pub fn generate_operations_try_code(
                     const _: () = {
                         const _CHECK: &str = #operation_type_ident::CHANNEL;
                     };
-                    
+
                     use protofolio::AsyncApiOperation;
                     let operation = #operation_type_ident::to_operation();
                     let operation_id = #operation_type_ident::operation_id();
-                    
+
                     let channel_name = #operation_type_ident::channel();
                     if !channels_map.contains_key(channel_name) {
                         let available: Vec<_> = channels_map.keys().collect();
@@ -104,7 +98,7 @@ pub fn generate_operations_try_code(
                             format!("Operation '{}' (type: {}) references channel '{}' which is not declared. {}", operation_id, stringify!(#operation_type_ident), channel_name, available_str)
                         ));
                     }
-                    
+
                     let channel = channels_map.get(channel_name)
                         .ok_or_else(|| protofolio::ValidationError::InvalidChannelReference(
                             format!("Channel '{}' should exist (validated above)", channel_name)
@@ -124,11 +118,10 @@ pub fn generate_operations_try_code(
                             });
                         }
                     }
-                    
+
                     operations_map.insert(operation_id.to_string(), operation);
                 }
             }
         })
         .collect()
 }
-

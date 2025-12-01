@@ -237,6 +237,48 @@ pub struct MyApi;
 pub struct MyMessage { /* ... */ }
 ```
 
+### Use Components for Reusable Messages
+
+When the same message structure is used across multiple channels, define it as a component:
+
+```rust
+use protofolio::{AsyncApiBuilder, Message, MessageOrRef};
+use std::collections::HashMap;
+
+// ✅ Good - define once, reuse multiple times
+let spec = AsyncApiBuilder::new()
+    .component_message(
+        "CommonEvent".to_string(),
+        Message { /* ... */ }
+    )
+    .channel("events.user".to_string(), Channel {
+        messages: {
+            let mut m = HashMap::new();
+            m.insert("CommonEvent".to_string(), MessageOrRef::component_ref("CommonEvent"));
+            m
+        },
+        // ...
+    })
+    .channel("events.system".to_string(), Channel {
+        messages: {
+            let mut m = HashMap::new();
+            m.insert("CommonEvent".to_string(), MessageOrRef::component_ref("CommonEvent"));
+            m
+        },
+        // ...
+    })
+    .build();
+
+// ❌ Avoid - duplicating the same message definition
+// Instead of defining the same message structure multiple times
+```
+
+Benefits:
+- Single source of truth for message structure
+- Easier maintenance (update once, applies everywhere)
+- Consistent message definitions across channels
+- Reduced specification size
+
 ## See Also
 
 - [Messages Guide](messages.md) - Message definition best practices

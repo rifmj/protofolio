@@ -43,34 +43,36 @@ static SCHEMA_CACHE: LazyLock<RwLock<HashMap<TypeId, Arc<serde_json::Value>>>> =
 /// programmatically or for testing.
 pub fn generate_schema<T: JsonSchema + 'static>() -> Result<serde_json::Value, SchemaError> {
     let type_id = TypeId::of::<T>();
-    
+
     // Check cache first (read lock for concurrent access)
     {
-        let cache = SCHEMA_CACHE.read()
-            .map_err(|e| SchemaError::Serialization(format!("Failed to acquire cache read lock: {}", e)))?;
+        let cache = SCHEMA_CACHE.read().map_err(|e| {
+            SchemaError::Serialization(format!("Failed to acquire cache read lock: {}", e))
+        })?;
         if let Some(cached) = cache.get(&type_id) {
             // Clone the Arc's inner value (cheap reference increment)
             return Ok((**cached).clone());
         }
     }
-    
+
     // Generate schema if not in cache
     // In schemars 1.0+, use generate::SchemaGenerator instead of gen::SchemaGenerator
     use schemars::generate::SchemaGenerator;
-    
+
     let mut gen = SchemaGenerator::default();
     let root_schema = T::json_schema(&mut gen);
     let value = serde_json::to_value(&root_schema)
         .map_err(|e| SchemaError::Serialization(e.to_string()))?;
-    
+
     // Store in cache wrapped in Arc (write lock for exclusive access)
     {
         let value_arc = Arc::new(value.clone());
-        let mut cache = SCHEMA_CACHE.write()
-            .map_err(|e| SchemaError::Serialization(format!("Failed to acquire cache write lock: {}", e)))?;
+        let mut cache = SCHEMA_CACHE.write().map_err(|e| {
+            SchemaError::Serialization(format!("Failed to acquire cache write lock: {}", e))
+        })?;
         cache.insert(type_id, value_arc);
     }
-    
+
     Ok(value)
 }
 
@@ -144,4 +146,3 @@ mod tests {
         assert!(properties.contains_key("age"));
     }
 }
-

@@ -135,6 +135,7 @@ mod tests {
             .channel(
                 "test.channel".to_string(),
                 Channel {
+                    address: "test.channel".to_string(),
                     description: Some("Test channel".to_string()),
                     messages: HashMap::new(),
                     servers: None,
@@ -173,6 +174,7 @@ mod tests {
             .channel_with_params(
                 "trip.{tripId}".to_string(),
                 Channel {
+                    address: "trip.{tripId}".to_string(),
                     description: None,
                     messages: HashMap::new(),
                     servers: None,
@@ -207,6 +209,7 @@ mod tests {
             .channel_with_bindings(
                 "test.channel".to_string(),
                 Channel {
+                    address: "test.channel".to_string(),
                     description: None,
                     messages: HashMap::new(),
                     servers: None,

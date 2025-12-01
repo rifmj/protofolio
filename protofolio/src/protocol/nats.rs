@@ -15,9 +15,8 @@ impl Protocol for NatsProtocol {
     fn name() -> &'static str {
         "NATS"
     }
-    
+
     fn identifier() -> &'static str {
         PROTOCOL
     }
 }
-
