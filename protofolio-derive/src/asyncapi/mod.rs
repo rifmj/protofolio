@@ -96,21 +96,14 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
         }
     }
 
-    // These use abort! which never returns, so let...else pattern doesn't apply
-    #[allow(clippy::option_if_let_else)]
-    let info_title = if let Some(title) = info_title {
-        title
-    } else {
+    let Some(info_title) = info_title else {
         abort!(
             ident,
             "AsyncApi requires 'info(title = ...)' attribute.\n\nExample: #[asyncapi(info(title = \"My API\", version = \"1.0.0\"))]"
         );
     };
 
-    #[allow(clippy::option_if_let_else)]
-    let info_version = if let Some(version) = info_version {
-        version
-    } else {
+    let Some(info_version) = info_version else {
         abort!(
             ident,
             "AsyncApi requires 'info(version = ...)' attribute.\n\nExample: #[asyncapi(info(title = \"My API\", version = \"1.0.0\"))]"

@@ -33,8 +33,8 @@ impl Parse for ServerVariableAttrs {
             let ident: syn::Ident = input.parse()?;
             let ident_str = ident.to_string();
 
+            input.parse::<Token![=]>()?;
             if ident_str == "enum" || ident_str == "enum_values" || ident_str == "examples" {
-                input.parse::<Token![=]>()?;
                 let content;
                 syn::bracketed!(content in input);
                 let mut list = Vec::new();
@@ -51,7 +51,6 @@ impl Parse for ServerVariableAttrs {
                     examples = Some(list);
                 }
             } else {
-                input.parse::<Token![=]>()?;
                 let lit: LitStr = input.parse()?;
 
                 match ident_str.as_str() {
@@ -94,8 +93,8 @@ impl Parse for ServerAttrs {
             let ident: syn::Ident = input.parse()?;
             let ident_str = ident.to_string();
 
+            input.parse::<Token![=]>()?;
             if ident_str == "security" || ident_str == "variables" {
-                input.parse::<Token![=]>()?;
                 let content;
                 syn::bracketed!(content in input);
                 if ident_str == "security" {
@@ -119,7 +118,6 @@ impl Parse for ServerAttrs {
                     }
                 }
             } else {
-                input.parse::<Token![=]>()?;
                 let lit: LitStr = input.parse()?;
 
                 match ident_str.as_str() {

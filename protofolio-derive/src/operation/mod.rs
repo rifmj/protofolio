@@ -1,4 +1,4 @@
-//! Main AsyncApiOperation derive macro implementation
+//! Main `AsyncApiOperation` derive macro implementation
 
 mod attrs;
 mod codegen;
@@ -65,21 +65,14 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
         }
     }
 
-    // abort! never returns, so let...else pattern doesn't apply
-    #[allow(clippy::option_if_let_else)]
-    let operation_id_lit = if let Some(id) = operation_id {
-        id
-    } else {
+    let Some(operation_id_lit) = operation_id else {
         abort!(
             ident,
             "AsyncApiOperation requires 'id' attribute.\n\nExample: #[asyncapi(id = \"publish-event\", action = \"send\", channel = \"events\", messages(MyMessage))]\n\nHint: The id attribute provides a unique identifier for this operation."
         );
     };
 
-    #[allow(clippy::option_if_let_else)]
-    let action_lit = if let Some(act) = action {
-        act
-    } else {
+    let Some(action_lit) = action else {
         abort!(
             ident,
             "AsyncApiOperation requires 'action' attribute.\n\nExample: #[asyncapi(id = \"publish-event\", action = \"send\", channel = \"events\", messages(MyMessage))]\n\nHint: The action must be either 'send' (publish) or 'receive' (subscribe)."
@@ -96,10 +89,7 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
         );
     }
 
-    #[allow(clippy::option_if_let_else)]
-    let channel_lit = if let Some(ch) = channel {
-        ch
-    } else {
+    let Some(channel_lit) = channel else {
         abort!(
             ident,
             "AsyncApiOperation requires 'channel' attribute.\n\nExample: #[asyncapi(id = \"publish-event\", action = \"send\", channel = \"events\", messages(MyMessage))]\n\nHint: The channel attribute specifies which channel this operation uses."

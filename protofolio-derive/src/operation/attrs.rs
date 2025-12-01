@@ -1,4 +1,4 @@
-//! Parser structures and implementations for AsyncApiOperation attributes
+//! Parser structures and implementations for `AsyncApiOperation` attributes
 
 use crate::parse_utils::{parse_optional_comma, parse_tags_array};
 use syn::{parse::Parse, Error, LitStr, Token};

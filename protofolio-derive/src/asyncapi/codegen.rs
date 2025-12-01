@@ -391,7 +391,7 @@ pub fn generate_tags_code(tags: &[TagAttrs]) -> TokenStream {
     }
 }
 
-/// Generate the complete impl block for AsyncApi trait
+/// Generate the complete impl block for `AsyncApi` trait
 pub fn generate_impl_block(
     ident: &Ident,
     info_title: &str,

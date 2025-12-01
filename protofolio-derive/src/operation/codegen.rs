@@ -1,4 +1,4 @@
-//! Code generation for AsyncApiOperation derive macro
+//! Code generation for `AsyncApiOperation` derive macro
 
 use crate::operation::attrs::ExternalDocsAttrs;
 use proc_macro2::TokenStream;
@@ -56,7 +56,7 @@ pub fn generate_external_docs_code(external_docs: &Option<ExternalDocsAttrs>) ->
     )
 }
 
-/// Generate the complete impl block for AsyncApiOperation
+/// Generate the complete impl block for `AsyncApiOperation`
 pub fn generate_impl_block(
     ident: &Ident,
     channel_lit: &LitStr,

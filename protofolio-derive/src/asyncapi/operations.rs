@@ -1,10 +1,10 @@
-//! Code generation for operation handling in AsyncApi derive macro
+//! Code generation for operation handling in `AsyncApi` derive macro
 
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-/// Generate code for operation handling (panic version for asyncapi())
+/// Generate code for operation handling (panic version for `asyncapi()`)
 pub fn generate_operations_code(operations: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     operations
         .iter()
@@ -70,7 +70,7 @@ pub fn generate_operations_code(operations: &[syn::Path], ident: &Ident) -> Vec<
         .collect()
 }
 
-/// Generate code for operation handling (error-returning version for try_asyncapi())
+/// Generate code for operation handling (error-returning version for `try_asyncapi()`)
 pub fn generate_operations_try_code(operations: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     operations
         .iter()

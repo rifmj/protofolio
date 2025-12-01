@@ -1,10 +1,10 @@
-//! Code generation for message handling in AsyncApi derive macro
+//! Code generation for message handling in `AsyncApi` derive macro
 
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-/// Generate code for message handling (panic version for asyncapi())
+/// Generate code for message handling (panic version for `asyncapi()`)
 pub fn generate_messages_code(messages: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     messages
         .iter()
@@ -75,7 +75,7 @@ pub fn generate_messages_code(messages: &[syn::Path], ident: &Ident) -> Vec<Toke
         .collect()
 }
 
-/// Generate code for message handling (error-returning version for try_asyncapi())
+/// Generate code for message handling (error-returning version for `try_asyncapi()`)
 pub fn generate_messages_try_code(messages: &[syn::Path], ident: &Ident) -> Vec<TokenStream> {
     messages
         .iter()

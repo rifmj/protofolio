@@ -75,6 +75,10 @@ fn test_kafka_spec_with_builder() {
             title: "Kafka Events API".to_string(),
             version: "1.0.0".to_string(),
             description: Some("Kafka-based event streaming".to_string()),
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .server(
             "kafka-broker".to_string(),
@@ -82,17 +86,20 @@ fn test_kafka_spec_with_builder() {
                 url: format!("kafka://localhost:{}", KAFKA_DEFAULT_PORT),
                 protocol: KAFKA_PROTOCOL.to_string(),
                 description: Some("Main Kafka broker".to_string()),
+                security: None,
+                variables: None,
             },
         )
         .kafka_channel(
             "user.events".to_string(),
             Channel {
+                address: "user.events".to_string(),
                 description: Some("User events channel".to_string()),
                 messages: {
                     let mut m = HashMap::new();
                     m.insert(
                         "UserEvent".to_string(),
-                        Message {
+                        protofolio::MessageOrRef::message(Message {
                             message_id: Some("user-event-v1".to_string()),
                             name: Some("UserEvent".to_string()),
                             title: None,
@@ -109,7 +116,7 @@ fn test_kafka_spec_with_builder() {
                             correlation_id: None,
                             traits: None,
                             bindings: None,
-                        },
+                        }),
                     );
                     m
                 },
@@ -132,8 +139,13 @@ fn test_kafka_spec_with_builder() {
     let channel = &spec.channels["user.events"];
     assert!(channel.bindings.is_some());
     let bindings = channel.bindings.as_ref().unwrap();
-    assert_eq!(bindings["kafka"]["topic"], "user-events");
-    assert_eq!(bindings["kafka"]["partitions"], 3);
+    match bindings {
+        protofolio::ChannelBindingsOrRef::Bindings(b) => {
+            assert_eq!(b["kafka"]["topic"], "user-events");
+            assert_eq!(b["kafka"]["partitions"], 3);
+        }
+        protofolio::ChannelBindingsOrRef::Ref(_) => panic!("Expected bindings, got reference"),
+    }
 
     assert!(validate_spec(&spec).is_ok());
 }
@@ -145,6 +157,10 @@ fn test_mqtt_spec_with_builder() {
             title: "MQTT IoT API".to_string(),
             version: "1.0.0".to_string(),
             description: None,
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .server(
             "mqtt-broker".to_string(),
@@ -152,17 +168,20 @@ fn test_mqtt_spec_with_builder() {
                 url: format!("mqtt://mqtt.example.com:{}", MQTT_DEFAULT_PORT),
                 protocol: MQTT_PROTOCOL.to_string(),
                 description: None,
+                security: None,
+                variables: None,
             },
         )
         .mqtt_channel(
             "sensors/temperature".to_string(),
             Channel {
+                address: "sensors/temperature".to_string(),
                 description: Some("Temperature sensor data".to_string()),
                 messages: {
                     let mut m = HashMap::new();
                     m.insert(
                         "TemperatureReading".to_string(),
-                        Message {
+                        protofolio::MessageOrRef::message(Message {
                             message_id: Some("temp-reading-v1".to_string()),
                             name: Some("TemperatureReading".to_string()),
                             title: None,
@@ -179,7 +198,7 @@ fn test_mqtt_spec_with_builder() {
                             correlation_id: None,
                             traits: None,
                             bindings: None,
-                        },
+                        }),
                     );
                     m
                 },
@@ -202,9 +221,14 @@ fn test_mqtt_spec_with_builder() {
     let channel = &spec.channels["sensors/temperature"];
     assert!(channel.bindings.is_some());
     let bindings = channel.bindings.as_ref().unwrap();
-    assert_eq!(bindings["mqtt"]["topic"], "sensors/temperature");
-    assert_eq!(bindings["mqtt"]["qos"], 1);
-    assert_eq!(bindings["mqtt"]["retain"], false);
+    match bindings {
+        protofolio::ChannelBindingsOrRef::Bindings(b) => {
+            assert_eq!(b["mqtt"]["topic"], "sensors/temperature");
+            assert_eq!(b["mqtt"]["qos"], 1);
+            assert_eq!(b["mqtt"]["retain"], false);
+        }
+        protofolio::ChannelBindingsOrRef::Ref(_) => panic!("Expected bindings, got reference"),
+    }
 
     assert!(validate_spec(&spec).is_ok());
 }
@@ -217,6 +241,10 @@ fn test_protocol_validation() {
             title: "Test".to_string(),
             version: "1.0.0".to_string(),
             description: None,
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .server(
             "kafka-server".to_string(),
@@ -224,6 +252,8 @@ fn test_protocol_validation() {
                 url: "kafka://localhost:9092".to_string(),
                 protocol: "kafka".to_string(),
                 description: None,
+                security: None,
+                variables: None,
             },
         )
         .server(
@@ -232,6 +262,8 @@ fn test_protocol_validation() {
                 url: "mqtt://localhost:1883".to_string(),
                 protocol: "mqtt".to_string(),
                 description: None,
+                security: None,
+                variables: None,
             },
         )
         .server(
@@ -240,17 +272,20 @@ fn test_protocol_validation() {
                 url: "nats://localhost:4222".to_string(),
                 protocol: "nats".to_string(),
                 description: None,
+                security: None,
+                variables: None,
             },
         )
         .channel(
             "test.channel".to_string(),
             Channel {
+                address: "test.channel".to_string(),
                 description: None,
                 messages: {
                     let mut m = HashMap::new();
                     m.insert(
                         "TestMessage".to_string(),
-                        Message {
+                        protofolio::MessageOrRef::message(Message {
                             message_id: None,
                             name: None,
                             title: None,
@@ -267,7 +302,7 @@ fn test_protocol_validation() {
                             correlation_id: None,
                             traits: None,
                             bindings: None,
-                        },
+                        }),
                     );
                     m
                 },

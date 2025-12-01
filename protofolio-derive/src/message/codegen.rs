@@ -1,4 +1,4 @@
-//! Code generation for AsyncApiMessage derive macro
+//! Code generation for `AsyncApiMessage` derive macro
 
 use crate::message::attrs::{CorrelationIdAttrs, ExternalDocsAttrs};
 use proc_macro2::TokenStream;
@@ -89,7 +89,7 @@ pub fn generate_examples_code(
 }
 
 /// Generate headers code
-/// Headers is a type path that should implement JsonSchema
+/// `Headers` is a type path that should implement `JsonSchema`
 pub fn generate_headers_code(headers: &Option<Path>) -> TokenStream {
     headers.as_ref().map_or_else(
         || quote! { None },
@@ -136,7 +136,7 @@ pub fn generate_correlation_id_code(correlation_id: &Option<CorrelationIdAttrs>)
     )
 }
 
-/// Generate the complete impl block for AsyncApiMessage
+/// Generate the complete impl block for `AsyncApiMessage`
 pub fn generate_impl_block(
     ident: &Ident,
     channel_lit: &LitStr,

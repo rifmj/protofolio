@@ -1,4 +1,4 @@
-//! Main AsyncApiMessage derive macro implementation
+//! Main `AsyncApiMessage` derive macro implementation
 
 mod attrs;
 mod codegen;
@@ -76,11 +76,7 @@ pub fn derive_asyncapi_message(input: DeriveInput) -> Result<TokenStream, Error>
         }
     }
 
-    // abort! never returns, so let...else pattern doesn't apply
-    #[allow(clippy::option_if_let_else)]
-    let channel_lit = if let Some(ch) = channel {
-        ch
-    } else {
+    let Some(channel_lit) = channel else {
         abort!(
             ident,
             "AsyncApiMessage requires 'channel' attribute.\n\nExample: #[asyncapi(channel = \"events\", messageId = \"event-v1\")]\n\nHint: The channel attribute specifies which channel this message is published to."

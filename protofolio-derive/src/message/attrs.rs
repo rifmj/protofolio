@@ -1,4 +1,4 @@
-//! Parser structures and implementations for AsyncApiMessage attributes
+//! Parser structures and implementations for `AsyncApiMessage` attributes
 
 use crate::parse_utils::{parse_examples_array, parse_optional_comma, parse_tags_array};
 use syn::{parse::Parse, Error, LitStr, Path, Token};

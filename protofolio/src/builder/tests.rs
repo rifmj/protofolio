@@ -241,6 +241,13 @@ mod tests {
         assert!(spec.channels.contains_key("test.channel"));
         assert!(spec.channels["test.channel"].bindings.is_some());
         let channel_bindings = spec.channels["test.channel"].bindings.as_ref().unwrap();
-        assert_eq!(channel_bindings["nats"]["queue"], "workers");
+        match channel_bindings {
+            crate::spec::ChannelBindingsOrRef::Bindings(b) => {
+                assert_eq!(b["nats"]["queue"], "workers");
+            }
+            crate::spec::ChannelBindingsOrRef::Ref(_) => {
+                panic!("Expected bindings, got reference");
+            }
+        }
     }
 }
