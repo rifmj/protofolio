@@ -56,7 +56,7 @@
 //! ```
 
 use crate::error::ValidationError;
-use crate::spec::*;
+use crate::spec::{Tag, *};
 use crate::types::ASYNCAPI_VERSION;
 use crate::validation;
 
@@ -80,11 +80,15 @@ impl AsyncApiBuilder {
                     version: String::new(),
                     description: None,
                     external_docs: None,
+                    contact: None,
+                    license: None,
+                    terms_of_service: None,
                 },
                 servers: None,
                 channels: Default::default(),
                 operations: None,
                 components: None,
+                tags: None,
             },
         }
     }
@@ -155,8 +159,24 @@ impl AsyncApiBuilder {
         channel: Channel,
         bindings: serde_json::Value,
     ) -> Self {
+        use crate::spec::ChannelBindingsOrRef;
         let mut ch = channel;
-        ch.bindings = Some(bindings);
+        ch.bindings = Some(ChannelBindingsOrRef::bindings(bindings));
+        self.spec.channels.insert(name, ch);
+        self
+    }
+
+    /// Add a channel with bindings reference
+    #[must_use]
+    pub fn channel_with_bindings_ref(
+        mut self,
+        name: String,
+        channel: Channel,
+        component_name: String,
+    ) -> Self {
+        use crate::spec::ChannelBindingsOrRef;
+        let mut ch = channel;
+        ch.bindings = Some(ChannelBindingsOrRef::component_ref(&component_name));
         self.spec.channels.insert(name, ch);
         self
     }
@@ -195,6 +215,13 @@ impl AsyncApiBuilder {
         self
     }
 
+    /// Set root-level tags
+    #[must_use]
+    pub fn tags(mut self, tags: Vec<Tag>) -> Self {
+        self.spec.tags = Some(tags);
+        self
+    }
+
     /// Add a message reference to a channel (references a component message)
     #[must_use]
     pub fn channel_message_ref(
@@ -211,6 +238,116 @@ impl AsyncApiBuilder {
                 message_name,
                 MessageOrRef::Ref(MessageReference { ref_path }),
             );
+        }
+        self
+    }
+
+    /// Add a component parameter
+    #[must_use]
+    pub fn component_parameter(mut self, name: String, parameter: crate::spec::Parameter) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.parameters.is_none() {
+                components.parameters = Some(Default::default());
+            }
+            if let Some(ref mut parameters) = components.parameters {
+                parameters.insert(name, parameter);
+            }
+        }
+        self
+    }
+
+    /// Add a component channel bindings
+    #[must_use]
+    pub fn component_channel_bindings(mut self, name: String, bindings: serde_json::Value) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.channel_bindings.is_none() {
+                components.channel_bindings = Some(Default::default());
+            }
+            if let Some(ref mut channel_bindings) = components.channel_bindings {
+                channel_bindings.insert(name, bindings);
+            }
+        }
+        self
+    }
+
+    /// Add a component message bindings
+    #[must_use]
+    pub fn component_message_bindings(mut self, name: String, bindings: serde_json::Value) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.message_bindings.is_none() {
+                components.message_bindings = Some(Default::default());
+            }
+            if let Some(ref mut message_bindings) = components.message_bindings {
+                message_bindings.insert(name, bindings);
+            }
+        }
+        self
+    }
+
+    /// Add a component server bindings
+    #[must_use]
+    pub fn component_server_bindings(mut self, name: String, bindings: serde_json::Value) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.server_bindings.is_none() {
+                components.server_bindings = Some(Default::default());
+            }
+            if let Some(ref mut server_bindings) = components.server_bindings {
+                server_bindings.insert(name, bindings);
+            }
+        }
+        self
+    }
+
+    /// Add a component operation trait
+    #[must_use]
+    pub fn component_operation_trait(
+        mut self,
+        name: String,
+        trait_: crate::spec::OperationTrait,
+    ) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.operation_traits.is_none() {
+                components.operation_traits = Some(Default::default());
+            }
+            if let Some(ref mut operation_traits) = components.operation_traits {
+                operation_traits.insert(name, trait_);
+            }
+        }
+        self
+    }
+
+    /// Add a component message trait
+    #[must_use]
+    pub fn component_message_trait(
+        mut self,
+        name: String,
+        trait_: crate::spec::MessageTrait,
+    ) -> Self {
+        if self.spec.components.is_none() {
+            self.spec.components = Some(Components::default());
+        }
+        if let Some(ref mut components) = self.spec.components {
+            if components.message_traits.is_none() {
+                components.message_traits = Some(Default::default());
+            }
+            if let Some(ref mut message_traits) = components.message_traits {
+                message_traits.insert(name, trait_);
+            }
         }
         self
     }

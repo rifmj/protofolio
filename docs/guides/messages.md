@@ -1,10 +1,10 @@
-# Messages Guide
+# Messages Guide 💬
 
-Messages are the core building blocks of your AsyncAPI specification. This guide covers how to define and configure message types.
+Messages are the core building blocks of your AsyncAPI specification. This guide covers how to define and configure message types. Let's dive in! 🚀
 
-## Basic Message Definition
+## Basic Message Definition 🎯
 
-A message type must implement `Serialize`, `Deserialize`, and `JsonSchema`:
+A message type must implement `Serialize`, `Deserialize`, and `JsonSchema` - easy peasy! ✨
 
 ```rust
 use protofolio_derive::AsyncApiMessage;
@@ -19,15 +19,15 @@ pub struct MyMessage {
 }
 ```
 
-## Message Attributes
+## Message Attributes 🏷️
 
-The `AsyncApiMessage` derive macro supports the following attributes:
+The `AsyncApiMessage` derive macro supports the following attributes - lots of options! 🎨
 
-### Required Attributes
+### Required Attributes ⚡
 
 - `channel` - The channel name for this message (required)
 
-### Optional Attributes
+### Optional Attributes ✨
 
 - `messageId` - Unique message identifier
 - `name` - Message name
@@ -473,20 +473,188 @@ let spec = AsyncApiBuilder::new()
     .build();
 ```
 
+### Component Parameters
+
+Define reusable parameter components for channels:
+
+```rust
+use protofolio::{AsyncApiBuilder, Parameter};
+
+let spec = AsyncApiBuilder::new()
+    .info(/* ... */)
+    // Define a reusable parameter component
+    .component_parameter(
+        "UserIdParam".to_string(),
+        Parameter {
+            description: Some("User ID parameter".to_string()),
+            schema: Some(serde_json::json!({
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            })),
+            location: Some("$message.header#/userId".to_string()),
+        },
+    )
+    .build();
+```
+
+### Component Bindings
+
+Define reusable protocol bindings for channels, messages, and servers:
+
+```rust
+use protofolio::AsyncApiBuilder;
+
+// Channel bindings component
+let spec = AsyncApiBuilder::new()
+    .info(/* ... */)
+    .component_channel_bindings(
+        "KafkaTopicBinding".to_string(),
+        serde_json::json!({
+            "kafka": {
+                "topic": "my-topic",
+                "partitions": 3,
+                "replicas": 2
+            }
+        }),
+    )
+    .build();
+
+// Message bindings component
+let spec = AsyncApiBuilder::new()
+    .info(/* ... */)
+    .component_message_bindings(
+        "KafkaMessageBinding".to_string(),
+        serde_json::json!({
+            "kafka": {
+                "key": {
+                    "type": "string",
+                    "description": "Message key for partitioning"
+                }
+            }
+        }),
+    )
+    .build();
+
+// Server bindings component
+let spec = AsyncApiBuilder::new()
+    .info(/* ... */)
+    .component_server_bindings(
+        "KafkaServerBinding".to_string(),
+        serde_json::json!({
+            "kafka": {
+                "schemaRegistryUrl": "https://schema-registry.example.com"
+            }
+        }),
+    )
+    .build();
+```
+
+### Component Operation Traits
+
+Define reusable operation traits that can be applied to multiple operations:
+
+```rust
+use protofolio::{AsyncApiBuilder, OperationTrait, Tag, ExternalDocumentation};
+
+let spec = AsyncApiBuilder::new()
+    .info(/* ... */)
+    .component_operation_trait(
+        "CommonOperationTrait".to_string(),
+        OperationTrait {
+            summary: Some("Common operation pattern".to_string()),
+            description: Some("This trait applies common properties to operations".to_string()),
+            tags: Some(vec![
+                Tag {
+                    name: "common".to_string(),
+                    description: Some("Common operations".to_string()),
+                },
+            ]),
+            external_docs: Some(ExternalDocumentation {
+                url: "https://example.com/docs/operations".to_string(),
+                description: Some("Operation documentation".to_string()),
+            }),
+            bindings: None,
+        },
+    )
+    .build();
+```
+
+### Component Message Traits
+
+Define reusable message traits that can be applied to multiple messages:
+
+```rust
+use protofolio::{AsyncApiBuilder, MessageTrait, MessagePayload, CorrelationId};
+
+let spec = AsyncApiBuilder::new()
+    .info(/* ... */)
+    .component_message_trait(
+        "CommonMessageTrait".to_string(),
+        MessageTrait {
+            headers: Some(MessagePayload {
+                schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "correlation_id": {"type": "string"},
+                        "trace_id": {"type": "string"}
+                    }
+                }),
+            }),
+            correlation_id: Some(CorrelationId {
+                location: "$message.header#/correlationId".to_string(),
+                description: Some("Correlation ID for tracking".to_string()),
+            }),
+            content_type: Some("application/json".to_string()),
+            name: None,
+            title: None,
+            summary: None,
+            description: None,
+            tags: None,
+            external_docs: None,
+            examples: None,
+            bindings: None,
+        },
+    )
+    .build();
+```
+
+### Using Component References
+
+Once you've defined components, you can reference them using `$ref` paths:
+
+```rust
+use protofolio::{Channel, ChannelBindingsOrRef, MessageOrRef};
+
+// Reference channel bindings component
+let channel = Channel {
+    address: "events".to_string(),
+    description: None,
+    messages: HashMap::new(),
+    servers: None,
+    parameters: None,
+    bindings: Some(ChannelBindingsOrRef::component_ref("KafkaTopicBinding")),
+};
+
+// Reference message component (shown earlier)
+let message_ref = MessageOrRef::component_ref("CommonMessage");
+```
+
 ### Benefits of Components
 
-- **Reusability**: Define a message once and reference it from multiple channels
-- **Consistency**: Ensure the same message structure is used across your API
-- **Maintainability**: Update a message definition in one place
-- **Reduced duplication**: Avoid repeating message definitions
+- **Reusability**: Define once and reference from multiple places
+- **Consistency**: Ensure the same structures are used across your API
+- **Maintainability**: Update definitions in one place
+- **Reduced duplication**: Avoid repeating definitions
+- **Organization**: Group related reusable definitions together
 
 ### Validation
 
 The validator ensures that:
 
-- Component references exist in `components.messages`
+- Component references exist in their respective component sections
 - Message IDs are unique across both inline messages and components
 - Component schemas are valid JSON schemas
+- `$ref` paths are correctly formatted
 
 ## See Also
 

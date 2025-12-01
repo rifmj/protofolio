@@ -8,12 +8,14 @@ mod components;
 mod info;
 mod operation;
 mod security;
+mod traits;
 
 pub use channel::*;
 pub use components::*;
 pub use info::*;
 pub use operation::*;
 pub use security::*;
+pub use traits::*;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -42,6 +44,10 @@ pub struct AsyncApiSpec {
     /// Reusable components
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Components>,
+
+    /// Root-level tags (reusable tag definitions)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<Tag>>,
 }
 
 /// Channel definitions (map of channel name to Channel)

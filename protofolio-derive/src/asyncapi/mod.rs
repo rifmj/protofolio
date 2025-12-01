@@ -10,6 +10,7 @@ use crate::asyncapi::{
     codegen::{
         generate_channels_code, generate_impl_block, generate_operations_map_code,
         generate_operations_map_try_code, generate_security_schemes_code, generate_servers_code,
+        generate_tags_code,
     },
     messages::{generate_messages_code, generate_messages_try_code},
     operations::{generate_operations_code, generate_operations_try_code},
@@ -29,11 +30,15 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
     let mut info_version = None;
     let mut info_description = None;
     let mut info_external_docs = None;
+    let mut info_contact = None;
+    let mut info_license = None;
+    let mut info_terms_of_service = None;
     let mut servers = Vec::new();
     let mut security_schemes = Vec::new();
     let mut channels = Vec::new();
     let mut messages = Vec::new();
     let mut operations = Vec::new();
+    let mut tags = Vec::new();
 
     for attr in &input.attrs {
         if attr.path().is_ident("asyncapi") {
@@ -64,6 +69,11 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
                     info_description = Some(description.value());
                 }
                 info_external_docs = info.external_docs;
+                info_contact = info.contact;
+                info_license = info.license;
+                if let Some(terms) = info.terms_of_service {
+                    info_terms_of_service = Some(terms.value());
+                }
             }
 
             // Process servers
@@ -80,6 +90,9 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
 
             // Process operations
             operations.extend(parser.operations);
+
+            // Process tags
+            tags.extend(parser.tags);
         }
     }
 
@@ -132,6 +145,68 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
         },
     );
 
+    let info_contact_expr = info_contact.as_ref().map_or_else(
+        || quote! { None },
+        |contact| {
+            let name_expr = contact.name.as_ref().map_or_else(
+                || quote! { None },
+                |name| {
+                    let name_str = name.value();
+                    quote! { Some(#name_str.to_string()) }
+                },
+            );
+            let url_expr = contact.url.as_ref().map_or_else(
+                || quote! { None },
+                |url| {
+                    let url_str = url.value();
+                    quote! { Some(#url_str.to_string()) }
+                },
+            );
+            let email_expr = contact.email.as_ref().map_or_else(
+                || quote! { None },
+                |email| {
+                    let email_str = email.value();
+                    quote! { Some(#email_str.to_string()) }
+                },
+            );
+            quote! {
+                Some(protofolio::Contact {
+                    name: #name_expr,
+                    url: #url_expr,
+                    email: #email_expr,
+                })
+            }
+        },
+    );
+
+    let info_license_expr = info_license.as_ref().map_or_else(
+        || quote! { None },
+        |license| {
+            let name_lit = &license.name;
+            let url_expr = license.url.as_ref().map_or_else(
+                || quote! { None },
+                |url| {
+                    let url_str = url.value();
+                    quote! { Some(#url_str.to_string()) }
+                },
+            );
+            quote! {
+                Some(protofolio::License {
+                    name: #name_lit.to_string(),
+                    url: #url_expr,
+                })
+            }
+        },
+    );
+
+    let info_terms_of_service_expr = info_terms_of_service.as_ref().map_or_else(
+        || quote! { None },
+        |terms| {
+            let terms_str = terms.as_str();
+            quote! { Some(#terms_str.to_string()) }
+        },
+    );
+
     // Generate code for servers
     let servers_code = generate_servers_code(&servers);
 
@@ -153,6 +228,9 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
     let operations_code = generate_operations_map_code(&operations_code_vec);
     let operations_code_try = generate_operations_map_try_code(&operations_try_code_vec);
 
+    // Generate code for tags
+    let tags_code = generate_tags_code(&tags);
+
     // Generate the impl block
     Ok(generate_impl_block(
         ident,
@@ -160,6 +238,9 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
         &info_version,
         info_desc_expr,
         info_external_docs_expr,
+        info_contact_expr,
+        info_license_expr,
+        info_terms_of_service_expr,
         &servers_code,
         security_schemes_code,
         &channels_code,
@@ -167,5 +248,6 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
         &messages_try_code,
         operations_code,
         operations_code_try,
+        tags_code,
     ))
 }

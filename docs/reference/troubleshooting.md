@@ -1,8 +1,8 @@
-# Troubleshooting Guide
+# Troubleshooting Guide 🛠️
 
-This guide helps you diagnose and fix common issues with `protofolio`.
+This guide helps you resolve common scenarios and questions when using `protofolio`. We've got your back! 💪
 
-## Quick Reference
+## Quick Reference 📋
 
 | Error | Section | Solution |
 |-------|---------|----------|
@@ -12,19 +12,19 @@ This guide helps you diagnose and fix common issues with `protofolio`.
 | Operation missing messages | [Missing Messages](#error-asyncapioperation-requires-at-least-one-message) | Add `messages(...)` attribute |
 | Runtime panic | [Runtime Errors](#runtime-errors) | Use `try_asyncapi()` for error handling |
 
-## Common Compilation Errors
+## Common Compilation Errors 🔧
 
 ### Error: "no associated item named `CHANNEL` found"
 
-**Problem**: A message or operation type is referenced in `messages(...)` or `operations(...)` but hasn't been processed by its derive macro.
+**Scenario**: A message or operation type is referenced in `messages(...)` or `operations(...)` but hasn't been processed by its derive macro.
 
 **Solution**: Ensure the type has the appropriate derive macro:
 
 ```rust
-// ❌ Wrong - missing derive
+// Missing derive
 pub struct MyMessage { /* ... */ }
 
-// ✅ Correct
+// With derive macro
 #[derive(AsyncApiMessage)]
 #[asyncapi(channel = "events")]
 pub struct MyMessage { /* ... */ }
@@ -32,12 +32,12 @@ pub struct MyMessage { /* ... */ }
 
 ### Error: "Message type 'X' references channel 'Y' which is not declared"
 
-**Problem**: A message references a channel that isn't listed in the `channels(...)` attribute.
+**Scenario**: A message references a channel that isn't listed in the `channels(...)` attribute.
 
 **Solution**: Add the channel to the `channels(...)` list:
 
 ```rust
-// ❌ Wrong - channel missing
+// Channel missing from list
 #[derive(AsyncApi)]
 #[asyncapi(
     channels("other.channel"),  // Missing "events"
@@ -45,7 +45,7 @@ pub struct MyMessage { /* ... */ }
 )]
 pub struct MyApi;
 
-// ✅ Correct
+// With all required channels
 #[derive(AsyncApi)]
 #[asyncapi(
     channels("events", "other.channel"),  // Includes "events"
@@ -56,28 +56,28 @@ pub struct MyApi;
 
 ### Error: "Failed to generate schema for message type"
 
-**Problem**: The message type doesn't implement `JsonSchema`.
+**Scenario**: The message type doesn't implement `JsonSchema`.
 
 **Solution**: Add `JsonSchema` derive (usually via `schemars`):
 
 ```rust
-// ❌ Wrong - missing JsonSchema
+// Missing JsonSchema derive
 #[derive(Serialize, Deserialize, AsyncApiMessage)]
 pub struct MyMessage { /* ... */ }
 
-// ✅ Correct
+// With JsonSchema derive
 #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
 pub struct MyMessage { /* ... */ }
 ```
 
 ### Error: "AsyncApiOperation requires at least one message"
 
-**Problem**: An operation is defined without any messages.
+**Scenario**: An operation is defined without any messages.
 
 **Solution**: Add at least one message to the `messages(...)` attribute:
 
 ```rust
-// ❌ Wrong - no messages
+// Missing messages attribute
 #[derive(AsyncApiOperation)]
 #[asyncapi(
     id = "my-op",
@@ -87,7 +87,7 @@ pub struct MyMessage { /* ... */ }
 )]
 pub struct MyOp;
 
-// ✅ Correct
+// With messages specified
 #[derive(AsyncApiOperation)]
 #[asyncapi(
     id = "my-op",
@@ -98,11 +98,11 @@ pub struct MyOp;
 pub struct MyOp;
 ```
 
-## Runtime Errors
+## Runtime Scenarios ⚡
 
 ### Panic: "Message 'X' references channel 'Y' which is not declared"
 
-**Problem**: Channel validation failed at runtime (should be caught at compile time, but can happen with macro ordering issues).
+**Scenario**: Channel validation occurred at runtime (typically caught at compile time, but can occur with macro ordering).
 
 **Solution**: 
 1. Ensure the channel is listed in `channels(...)`
@@ -111,28 +111,28 @@ pub struct MyOp;
 
 ### Panic: "Failed to generate schema for message type"
 
-**Problem**: The type doesn't implement `JsonSchema` or has unsupported types.
+**Scenario**: The type doesn't implement `JsonSchema` or has unsupported types.
 
 **Solution**:
 1. Ensure `#[derive(JsonSchema)]` is present
 2. Check that all nested types also implement `JsonSchema`
 3. For complex types, you may need to implement `JsonSchema` manually
 
-## Common Issues
+## Common Scenarios 💡
 
-### Schema generation fails for generic types
+### Schema generation for generic types
 
-**Problem**: Generic types can't be automatically converted to JSON Schema.
+**Scenario**: Generic types require manual `JsonSchema` implementation.
 
 **Solution**: Use concrete types or implement `JsonSchema` manually:
 
 ```rust
-// ❌ Problematic - generic type
+// Generic type requires manual implementation
 pub struct GenericMessage<T> {
     pub data: T,
 }
 
-// ✅ Better - use concrete types or type aliases
+// Recommended - use concrete types or type aliases
 pub struct StringMessage {
     pub data: String,
 }
@@ -140,39 +140,39 @@ pub struct StringMessage {
 
 ### Circular references in types
 
-**Problem**: Types that reference each other can cause issues.
+**Scenario**: Types that reference each other may need special handling.
 
 **Solution**: Use `Option` or references to break cycles:
 
 ```rust
-// ❌ Problematic - circular reference
+// Direct circular reference
 pub struct Node {
-    pub children: Vec<Node>,  // Can cause issues
+    pub children: Vec<Node>,
 }
 
-// ✅ Better - use Option or limit depth
+// Recommended - use Option to break the cycle
 pub struct Node {
     pub children: Option<Vec<Node>>,
 }
 ```
 
-### Large specifications are slow to generate
+### Large specifications performance
 
-**Problem**: Many messages or complex schemas can slow down compilation.
+**Scenario**: Many messages or complex schemas may take longer to generate.
 
 **Solution**:
 1. Consider splitting into multiple `AsyncApi` structs
 2. Use simpler types where possible
 3. Cache generated specs if generating frequently
 
-### Macro ordering issues
+### Macro ordering
 
-**Problem**: Message and operation types must be defined before the `AsyncApi` struct that references them.
+**Scenario**: Message and operation types should be defined before the `AsyncApi` struct that references them.
 
 **Solution**: Define message types before the API struct:
 
 ```rust
-// ✅ Good - messages defined first
+// Recommended - messages defined first
 #[derive(AsyncApiMessage)]
 #[asyncapi(channel = "events")]
 pub struct MyMessage { /* ... */ }
@@ -182,18 +182,18 @@ pub struct MyMessage { /* ... */ }
 pub struct MyApi;
 ```
 
-## Getting Help
+## Getting Help 💬
 
-If you're still experiencing issues:
+If you need additional assistance, we're here to help! 🤝
 
-1. Check the [Limitations](limitations.md) guide for known limitations
-2. Review the [Macro Expansion](macro-expansion.md) guide to understand how macros work
-3. Check the error message carefully - it often includes hints and suggestions
-4. Ensure all dependencies are up to date
+1. 📖 Check the [Considerations](limitations.md) guide for design decisions and approaches
+2. ⚙️ Review the [Macro Expansion](macro-expansion.md) guide to understand how macros work
+3. 🔍 Check the error message carefully - it often includes hints and suggestions
+4. 📦 Ensure all dependencies are up to date
 
 ## See Also
 
-- [Limitations](limitations.md) - Known limitations and workarounds
+- [Considerations](limitations.md) - Design decisions and recommended approaches
 - [Macro Expansion](macro-expansion.md) - How macros work internally
 - [Validation Guide](../guides/validation.md) - Validation details
 

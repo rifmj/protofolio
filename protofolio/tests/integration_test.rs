@@ -658,6 +658,83 @@ fn test_channel_address_field() {
 }
 
 #[test]
+fn test_info_contact_license_terms() {
+    #[derive(AsyncApi)]
+    #[asyncapi(
+        info(
+            title = "Info Fields Test API",
+            version = "1.0.0",
+            description = "Test API with contact, license, and terms of service",
+            contact(
+                name = "API Support",
+                email = "support@example.com",
+                url = "https://example.com/contact"
+            ),
+            license(
+                name = "Apache 2.0",
+                url = "https://www.apache.org/licenses/LICENSE-2.0"
+            ),
+            terms_of_service = "https://example.com/terms"
+        ),
+        channels("test.channel"),
+        messages(TestMessage)
+    )]
+    pub struct InfoFieldsTestApi;
+
+    let spec = InfoFieldsTestApi::asyncapi();
+
+    // Verify contact
+    assert!(spec.info.contact.is_some());
+    let contact = spec.info.contact.as_ref().unwrap();
+    assert_eq!(contact.name, Some("API Support".to_string()));
+    assert_eq!(contact.email, Some("support@example.com".to_string()));
+    assert_eq!(contact.url, Some("https://example.com/contact".to_string()));
+
+    // Verify license
+    assert!(spec.info.license.is_some());
+    let license = spec.info.license.as_ref().unwrap();
+    assert_eq!(license.name, "Apache 2.0");
+    assert_eq!(
+        license.url,
+        Some("https://www.apache.org/licenses/LICENSE-2.0".to_string())
+    );
+
+    // Verify terms of service
+    assert_eq!(
+        spec.info.terms_of_service,
+        Some("https://example.com/terms".to_string())
+    );
+}
+
+#[test]
+fn test_info_optional_fields() {
+    #[derive(AsyncApi)]
+    #[asyncapi(
+        info(
+            title = "Minimal Info API",
+            version = "1.0.0",
+            contact(name = "Support")
+        ),
+        channels("test.channel"),
+        messages(TestMessage)
+    )]
+    pub struct MinimalInfoApi;
+
+    let spec = MinimalInfoApi::asyncapi();
+
+    // Verify contact with only name
+    assert!(spec.info.contact.is_some());
+    let contact = spec.info.contact.as_ref().unwrap();
+    assert_eq!(contact.name, Some("Support".to_string()));
+    assert!(contact.email.is_none());
+    assert!(contact.url.is_none());
+
+    // Verify license and terms are None
+    assert!(spec.info.license.is_none());
+    assert!(spec.info.terms_of_service.is_none());
+}
+
+#[test]
 fn test_operation_id_field() {
     let spec = TestAsyncApiWithOperations::asyncapi();
     let operations = spec.operations.as_ref().unwrap();
@@ -724,4 +801,82 @@ fn test_operation_id_in_json() {
     let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
     let operation = &parsed["operations"]["publish-test-message"];
     assert_eq!(operation["operationId"], "publish-test-message");
+}
+
+// Test root-level tags
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(title = "Test API with Tags", version = "1.0.0"),
+    tags(
+        (name = "orders", description = "Order-related operations"),
+        (name = "events", description = "Event notifications"),
+        (name = "users")
+    ),
+    channels("test.channel"),
+    messages(TestMessage)
+)]
+pub struct TestAsyncApiWithTags;
+
+#[test]
+fn test_root_level_tags() {
+    let spec = TestAsyncApiWithTags::asyncapi();
+
+    // Verify tags are present
+    assert!(spec.tags.is_some());
+    let tags = spec.tags.as_ref().unwrap();
+    assert_eq!(tags.len(), 3);
+
+    // Verify tag names
+    let tag_names: Vec<&str> = tags.iter().map(|t| t.name.as_str()).collect();
+    assert!(tag_names.contains(&"orders"));
+    assert!(tag_names.contains(&"events"));
+    assert!(tag_names.contains(&"users"));
+
+    // Verify tag descriptions
+    let orders_tag = tags.iter().find(|t| t.name == "orders").unwrap();
+    assert_eq!(
+        orders_tag.description,
+        Some("Order-related operations".to_string())
+    );
+
+    let events_tag = tags.iter().find(|t| t.name == "events").unwrap();
+    assert_eq!(
+        events_tag.description,
+        Some("Event notifications".to_string())
+    );
+
+    let users_tag = tags.iter().find(|t| t.name == "users").unwrap();
+    assert_eq!(users_tag.description, None);
+}
+
+#[test]
+fn test_root_level_tags_serialization() {
+    let spec = TestAsyncApiWithTags::asyncapi();
+    let json = protofolio::to_json(&spec).unwrap();
+
+    // Parse JSON and verify tags are present
+    let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert!(parsed["tags"].is_array());
+    let tags = parsed["tags"].as_array().unwrap();
+    assert_eq!(tags.len(), 3);
+
+    // Verify first tag structure
+    let orders_tag = tags.iter().find(|t| t["name"] == "orders").unwrap();
+    assert_eq!(orders_tag["name"], "orders");
+    assert_eq!(orders_tag["description"], "Order-related operations");
+
+    // Verify tag without description
+    let users_tag = tags.iter().find(|t| t["name"] == "users").unwrap();
+    assert_eq!(users_tag["name"], "users");
+    assert!(!users_tag.as_object().unwrap().contains_key("description"));
+}
+
+#[test]
+fn test_root_level_tags_with_try_asyncapi() {
+    let result = TestAsyncApiWithTags::try_asyncapi();
+    assert!(result.is_ok());
+
+    let spec = result.unwrap();
+    assert!(spec.tags.is_some());
+    assert_eq!(spec.tags.as_ref().unwrap().len(), 3);
 }

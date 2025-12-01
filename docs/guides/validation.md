@@ -1,59 +1,59 @@
-# Validation Guide
+# Validation Guide ✅
 
-This guide explains how validation works in `protofolio` and how to handle validation errors.
+This guide explains how validation works in `protofolio` and how to handle validation results. Safety first! 🛡️
 
-## Overview
+## Overview 📋
 
-`protofolio` performs validation at two levels:
-1. **Compile-time validation** - Checks performed during macro expansion
-2. **Runtime validation** - Checks performed when generating the spec
+`protofolio` performs validation at two levels - double protection! 🎯
+1. 🔍 **Compile-time validation** - Checks performed during macro expansion
+2. ⚡ **Runtime validation** - Checks performed when generating the spec
 
-## Compile-Time Validation
+## Compile-Time Validation 🔍
 
-The macros validate the following at compile time:
+The macros validate the following at compile time - catch issues early! 🎯
 
 - `CHANNEL` consts exist for all message/operation types (ensures they have the appropriate derive macro)
 - Attribute syntax is correct
 - Required fields are present (e.g., `info(title, version)`, `channel` for messages)
 
-### Example Compile-Time Errors
+### Example Compile-Time Validation
 
-If a message type is missing the `AsyncApiMessage` derive:
+When a message type needs the `AsyncApiMessage` derive:
 
 ```rust
-// ❌ Wrong - missing derive
+// Missing derive
 pub struct MyMessage { /* ... */ }
 
-// ✅ Correct
+// With derive macro
 #[derive(AsyncApiMessage)]
 #[asyncapi(channel = "events")]
 pub struct MyMessage { /* ... */ }
 ```
 
-## Runtime Validation
+## Runtime Validation ⚡
 
 Runtime validation occurs when you call `asyncapi()` or `try_asyncapi()`. It checks:
 
-- Channel references match declared channels
-- Message references exist in their channels
-- JSON Schema generation succeeds
-- AsyncAPI spec validation passes
+- ✅ Channel references match declared channels
+- ✅ Message references exist in their channels
+- ✅ JSON Schema generation succeeds
+- ✅ AsyncAPI spec validation passes
 
-## Using Validation
+## Using Validation 🎯
 
-### Panic-on-Error API
+### Direct API 🚀
 
-The `asyncapi()` method panics if validation fails:
+The `asyncapi()` method generates the spec directly - simple and fast! ⚡
 
 ```rust
-let spec = MyApi::asyncapi();  // Panics on error
+let spec = MyApi::asyncapi();  // Generates the spec
 ```
 
 Use this when you're certain the spec is valid (e.g., in tests or during development).
 
-### Result-Based API
+### Result-Based API 🎭
 
-The `try_asyncapi()` method returns a `Result`:
+The `try_asyncapi()` method returns a `Result` for graceful handling - production-ready! 🚀
 
 ```rust
 match MyApi::try_asyncapi() {
@@ -62,13 +62,13 @@ match MyApi::try_asyncapi() {
         let json = protofolio::to_json(&spec)?;
     }
     Err(e) => {
-        // Handle validation errors
-        eprintln!("Failed to generate spec: {}", e);
+        // Handle validation results
+        eprintln!("Validation result: {}", e);
     }
 }
 ```
 
-Use this in production code to handle errors gracefully.
+Use this in production code to handle validation results gracefully.
 
 ### Additional Validation
 
@@ -80,24 +80,24 @@ use protofolio::{AsyncApi, validate_spec};
 let spec = ECommerceApi::asyncapi();
 match validate_spec(&spec) {
     Ok(()) => println!("Spec is valid!"),
-    Err(e) => eprintln!("Validation error: {}", e),
+    Err(e) => eprintln!("Validation result: {}", e),
 }
 ```
 
-## Validation Flow
+## Validation Flow 🔄
 
-The recommended validation flow for production:
+The recommended validation flow for production - follow this pattern! ✨
 
 ```rust
 let spec = MyApi::try_asyncapi()?;  // Returns Result
 protofolio::validate_spec(&spec)?;  // Additional validation
 ```
 
-## Common Validation Errors
+## Common Validation Scenarios 💡
 
-### Channel Not Declared
+### Channel Not Declared 🚫
 
-**Error**: "Message type 'X' references channel 'Y' which is not declared"
+**Message**: "Message type 'X' references channel 'Y' which is not declared"
 
 **Solution**: Add the channel to the `channels(...)` list:
 
@@ -112,13 +112,13 @@ pub struct MyApi;
 
 ### Message Not Found in Channel
 
-**Error**: "Operation references message 'X' in channel 'Y' which does not exist"
+**Message**: "Operation references message 'X' in channel 'Y' which does not exist"
 
 **Solution**: Ensure the message is registered in the `messages(...)` list and uses the correct channel.
 
-### Schema Generation Failed
+### Schema Generation
 
-**Error**: "Failed to generate schema for message type"
+**Message**: "Failed to generate schema for message type"
 
 **Solution**: Ensure the message type implements `JsonSchema`:
 

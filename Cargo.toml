@@ -1,5 +1,5 @@
 [workspace]
-members = ["protofolio", "protofolio-derive"]
+members = ["protofolio", "protofolio-derive", "protofolio-cli"]
 resolver = "2"
 
 [workspace.package]

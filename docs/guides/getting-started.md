@@ -1,13 +1,13 @@
-# Getting Started
+# Getting Started 🚀
 
-This guide will help you get started with `protofolio` - a Rust crate for generating AsyncAPI 3.0 specifications from your code.
+Welcome to `protofolio`! This guide will help you get started with generating AsyncAPI 3.0 specifications from your Rust code. Let's dive in! 💪
 
-## Installation & Requirements
+## Installation & Requirements 📦
 
 ### Requirements
 
-- **Rust**: 1.80 or later
-- **Dependencies**: Your message types must implement:
+- 🦀 **Rust**: 1.80 or later
+- 📚 **Dependencies**: Your message types must implement:
   - `Serialize` and `Deserialize` (from `serde`)
   - `JsonSchema` (from `schemars`)
 
@@ -23,9 +23,9 @@ serde = { version = "1.0", features = ["derive"] }
 schemars = { version = "1.0", features = ["derive"] }
 ```
 
-## Quick Start
+## Quick Start ⚡
 
-Here's a minimal example to get you started:
+Here's a minimal example to get you started. It's super simple! 🎯
 
 ```rust
 use protofolio::AsyncApi;
@@ -44,7 +44,13 @@ pub struct Event {
 // Define your AsyncAPI specification
 #[derive(AsyncApi)]
 #[asyncapi(
-    info(title = "My API", version = "1.0.0"),
+    info(
+        title = "My API",
+        version = "1.0.0",
+        description = "My awesome API",
+        contact(name = "Support", email = "support@example.com"),
+        license(name = "MIT")
+    ),
     channels("events"),
     messages(Event)
 )]
@@ -61,9 +67,28 @@ let json = MyApi::asyncapi_json()?;
 let yaml = MyApi::asyncapi_yaml()?;
 ```
 
-## What's Next?
+## Generating TypeScript Types 📘
 
-- Learn about [Messages](messages.md) - how to define and configure message types
-- Explore [Operations](operations.md) - how to define publish/subscribe operations
-- Check out [Examples](../examples/basic.md) - more detailed examples
-- Read [Best Practices](best-practices.md) - recommended patterns and conventions
+Want to use your AsyncAPI specs in TypeScript/JavaScript projects? Use the `protofolio-cli` tool to generate TypeScript type definitions:
+
+```bash
+# Build the CLI
+cargo build --release --package protofolio-cli
+
+# Generate TypeScript types
+./target/release/protofolio generate --spec asyncapi.json --output ./types
+```
+
+See the [TypeScript Generation Guide](typescript-generation.md) for detailed instructions! 🚀
+
+## What's Next? 🎯
+
+Ready to learn more? Here's where to go next:
+
+- 💬 Learn about [Messages](messages.md) - how to define and configure message types
+- 🔄 Explore [Operations](operations.md) - how to define publish/subscribe operations
+- 📘 Check out [TypeScript Generation](typescript-generation.md) - generate TypeScript types from your specs
+- 💡 Check out [Examples](../examples/basic.md) - more detailed examples
+- ⭐ Read [Best Practices](best-practices.md) - recommended patterns and conventions
+
+Happy coding! 🎉

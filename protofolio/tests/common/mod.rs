@@ -12,6 +12,10 @@ pub fn create_test_spec() -> protofolio::AsyncApiSpec {
             title: "Test API".to_string(),
             version: "1.0.0".to_string(),
             description: Some("Test API description".to_string()),
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .server(
             "nats".to_string(),
@@ -46,6 +50,12 @@ pub fn create_test_spec() -> protofolio::AsyncApiSpec {
                                     }
                                 }),
                             },
+                            external_docs: None,
+                            examples: None,
+                            headers: None,
+                            correlation_id: None,
+                            traits: None,
+                            bindings: None,
                         },
                     );
                     m

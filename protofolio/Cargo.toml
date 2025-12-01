@@ -66,3 +66,7 @@ path = "examples/kafka_example.rs"
 name = "mqtt_example"
 path = "examples/mqtt_example.rs"
 
+[[example]]
+name = "generate_spec"
+path = "examples/generate_spec.rs"
+

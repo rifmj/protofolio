@@ -81,11 +81,6 @@ let generated = MyApi::asyncapi_json()?;
 - ✅ Automatic schema generation from Rust types
 - ✅ No manual synchronization needed
 
-**Disadvantages**:
-
-- ❌ Less flexibility for complex AsyncAPI features not yet supported
-- ❌ Requires Rust code changes to update documentation
-
 ### vs. OpenAPI/utoipa
 
 **Similarities**:
@@ -107,11 +102,6 @@ let generated = MyApi::asyncapi_json()?;
 - ✅ Compile-time validation
 - ✅ Type safety
 - ✅ No external tooling required
-
-**Disadvantages**:
-
-- ❌ Less mature than some established tools (but actively developed)
-- ❌ Rust-specific (not applicable to other languages)
 
 ## Workarounds for Common Scenarios
 
@@ -169,5 +159,5 @@ if let Err(e) = validate_spec(&spec) {
 ## See Also
 
 - [Getting Started](../guides/getting-started.md) - Installation and basic usage
-- [Limitations](limitations.md) - Known limitations and workarounds
+- [Considerations](limitations.md) - Design decisions and recommended approaches
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions

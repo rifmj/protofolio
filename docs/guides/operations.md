@@ -1,16 +1,16 @@
-# Operations Guide
+# Operations Guide 🔄
 
-Operations define publish/subscribe actions on channels. This guide covers how to define and use operations.
+Operations define publish/subscribe actions on channels. This guide covers how to define and use operations. Let's get operational! 🚀
 
-## What are Operations?
+## What are Operations? 🤔
 
 Operations describe how messages are sent or received on channels:
-- **Send operations**: Define how messages are published to a channel
-- **Receive operations**: Define how messages are consumed from a channel
+- 📤 **Send operations**: Define how messages are published to a channel
+- 📥 **Receive operations**: Define how messages are consumed from a channel
 
-## Basic Operation Definition
+## Basic Operation Definition 🎯
 
-Use the `AsyncApiOperation` derive macro to define operations:
+Use the `AsyncApiOperation` derive macro to define operations - super straightforward! ✨
 
 ```rust
 use protofolio_derive::AsyncApiOperation;
@@ -26,18 +26,18 @@ use protofolio_derive::AsyncApiOperation;
 pub struct PublishOrderCreated;
 ```
 
-## Operation Attributes
+## Operation Attributes 🏷️
 
-The `AsyncApiOperation` derive macro supports the following attributes:
+The `AsyncApiOperation` derive macro supports the following attributes - lots of customization options! 🎨
 
-### Required Attributes
+### Required Attributes ⚡
 
 - `id` - Unique operation identifier (required). This becomes the `operationId` field in the generated AsyncAPI specification.
 - `action` - Either "send" or "receive" (required)
 - `channel` - The channel name for this operation (required)
 - `messages(...)` - List of message types (at least one required)
 
-### Optional Attributes
+### Optional Attributes ✨
 
 - `summary` - Brief summary of the operation
 - `description` - Detailed description
@@ -46,9 +46,9 @@ The `AsyncApiOperation` derive macro supports the following attributes:
 
 **Note:** The `id` attribute you specify is automatically included as the `operationId` field in the generated `Operation` struct, which is required by AsyncAPI 3.0.
 
-## Send Operations
+## Send Operations 📤
 
-Send operations define how messages are published:
+Send operations define how messages are published - let's send some messages! 🚀
 
 ```rust
 #[derive(AsyncApiOperation)]
@@ -65,9 +65,9 @@ Send operations define how messages are published:
 pub struct PublishOrderCreated;
 ```
 
-## Receive Operations
+## Receive Operations 📥
 
-Receive operations define how messages are consumed:
+Receive operations define how messages are consumed - ready to receive! 🎯
 
 ```rust
 #[derive(AsyncApiOperation)]
@@ -81,9 +81,9 @@ Receive operations define how messages are consumed:
 pub struct SubscribeOrderStatus;
 ```
 
-## Registering Operations
+## Registering Operations 📝
 
-After defining your operations, register them in your `AsyncApi` specification:
+After defining your operations, register them in your `AsyncApi` specification - almost there! ✨
 
 ```rust
 use protofolio::AsyncApi;
@@ -100,9 +100,9 @@ use protofolio_derive::AsyncApi;
 pub struct ECommerceApi;
 ```
 
-## Operations with Multiple Messages
+## Operations with Multiple Messages 🔄
 
-An operation can reference multiple messages:
+An operation can reference multiple messages - flexibility at its finest! 💪
 
 ```rust
 #[derive(AsyncApiOperation)]
@@ -116,15 +116,15 @@ An operation can reference multiple messages:
 pub struct HandleProductEvents;
 ```
 
-## Validation
+## Validation ✅
 
 Operations are validated to ensure:
-- The channel exists in the declared channels
-- All referenced messages exist in the channel
-- The action is either "send" or "receive"
-- At least one message is specified
+- ✅ The channel exists in the declared channels
+- ✅ All referenced messages exist in the channel
+- ✅ The action is either "send" or "receive"
+- ✅ At least one message is specified
 
-If validation fails, you'll get detailed error messages with suggestions.
+If validation fails, you'll get detailed error messages with suggestions - we've got your back! 💪
 
 ## See Also
 

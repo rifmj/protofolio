@@ -196,6 +196,8 @@ pub trait AsyncApiOperation {
             description: Self::description().map(|s| s.to_string()),
             tags: Self::tags(),
             external_docs: Self::external_docs(),
+            traits: None,
+            bindings: None,
         }
     }
 }

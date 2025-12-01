@@ -1,0 +1,17 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+#
+# Install: pip install pre-commit
+# Then run: pre-commit install
+
+repos:
+  # Custom local hook for cargo fmt
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: bash -c 'cargo fmt --all && git add -u'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true

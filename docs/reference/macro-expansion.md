@@ -178,15 +178,15 @@ Runtime validation occurs when generating the spec:
 - JSON Schema generation succeeds
 - AsyncAPI spec validation passes
 
-**Why runtime?** Full compile-time validation of channel names against declared channels isn't possible in stable Rust due to limitations with string matching in const contexts.
+**Why runtime?** Channel name validation occurs at runtime to provide flexibility and support dynamic channel configurations, while compile-time validation ensures `CHANNEL` consts exist.
 
 ## Error Messages
 
 The macros provide detailed error messages with:
 
 - Available channels/messages
-- Hints on how to fix the issue
-- Exact location of the problem
+- Hints on how to resolve the scenario
+- Exact location of the item
 
 Example error:
 
@@ -201,5 +201,5 @@ Hint: Update your #[derive(AsyncApi)] on MyApi to include: channels("events", ..
 ## See Also
 
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
-- [Limitations](limitations.md) - Known limitations
+- [Considerations](limitations.md) - Design decisions and recommended approaches
 - [Validation Guide](../guides/validation.md) - Validation details

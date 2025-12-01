@@ -1,10 +1,10 @@
-# Basic Examples
+# Basic Examples 💡
 
-This page contains basic examples of using `protofolio`.
+This page contains basic examples of using `protofolio`. Perfect for getting started! 🚀
 
-## Simple Message and API
+## Simple Message and API 🎯
 
-The most basic example:
+The most basic example - let's start simple:
 
 ```rust
 use protofolio::AsyncApi;
@@ -33,9 +33,9 @@ pub struct MyApi;
 let spec = MyApi::asyncapi();
 ```
 
-## Enhanced Message Attributes
+## Enhanced Message Attributes ✨
 
-Example with all message attributes:
+Example with all message attributes - let's see what's possible:
 
 ```rust
 use protofolio::AsyncApi;
@@ -67,7 +67,17 @@ pub struct OrderStatusChanged {
         title = "E-Commerce Events API",
         version = "1.0.0",
         description = "Real-time e-commerce order events",
-        external_docs(url = "https://example.com/api-docs", description = "Full API documentation")
+        external_docs(url = "https://example.com/api-docs", description = "Full API documentation"),
+        contact(
+            name = "API Support",
+            email = "support@example.com",
+            url = "https://example.com/contact"
+        ),
+        license(
+            name = "Apache 2.0",
+            url = "https://www.apache.org/licenses/LICENSE-2.0"
+        ),
+        terms_of_service = "https://example.com/terms"
     ),
     servers(
         (name = "nats", url = "nats://nats:4222", protocol = "nats")
@@ -84,7 +94,9 @@ let json = ECommerceApi::asyncapi_json()?;
 let yaml = ECommerceApi::asyncapi_yaml()?;
 ```
 
-## Multiple Messages on Same Channel
+## Multiple Messages on Same Channel 🔄
+
+You can have multiple messages on the same channel:
 
 ```rust
 #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
@@ -109,7 +121,7 @@ pub struct ProductUpdated {
 pub struct ProductEventsApi;
 ```
 
-## Multiple Servers
+## Multiple Servers 🌐
 
 ```rust
 #[derive(AsyncApi)]
@@ -125,7 +137,7 @@ pub struct ProductEventsApi;
 pub struct MultiServerApi;
 ```
 
-## Server Variables
+## Server Variables 🔧
 
 Use templated URLs with server variables for flexible server configurations:
 
@@ -158,7 +170,7 @@ Server variables support:
 - `enum_values` - List of allowed values (note: use `enum_values` instead of `enum` since `enum` is a Rust keyword)
 - `examples` - Example values for the variable
 
-## Security Schemes
+## Security Schemes 🔐
 
 Define security schemes and apply them to servers:
 
@@ -179,7 +191,7 @@ Define security schemes and apply them to servers:
 pub struct SecureApi;
 ```
 
-## External Documentation
+## External Documentation 📚
 
 Add external documentation references to Info, Messages, and Operations:
 
@@ -217,7 +229,79 @@ pub struct Event {
 pub struct PublishEvent;
 ```
 
-## Message Examples
+## Info Fields (Contact, License, Terms of Service) ℹ️
+
+The `info` section supports additional metadata about your API:
+
+```rust
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(
+        title = "My API",
+        version = "1.0.0",
+        description = "API description",
+        // Contact information (all fields optional)
+        contact(
+            name = "API Support",
+            email = "support@example.com",
+            url = "https://example.com/contact"
+        ),
+        // License information (name required, url optional)
+        license(
+            name = "Apache 2.0",
+            url = "https://www.apache.org/licenses/LICENSE-2.0"
+        ),
+        // Terms of Service URL
+        terms_of_service = "https://example.com/terms"
+    ),
+    channels("events"),
+    messages(Event)
+)]
+pub struct MyApi;
+```
+
+All Info fields are optional. You can use any combination:
+
+```rust
+// Minimal - only contact name
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(
+        title = "My API",
+        version = "1.0.0",
+        contact(name = "Support")
+    ),
+    channels("events"),
+    messages(Event)
+)]
+pub struct MinimalApi;
+
+// Full example with all fields
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(
+        title = "Production API",
+        version = "2.0.0",
+        description = "Production API for our service",
+        contact(
+            name = "Engineering Team",
+            email = "eng@example.com",
+            url = "https://example.com/contact"
+        ),
+        license(
+            name = "MIT",
+            url = "https://opensource.org/licenses/MIT"
+        ),
+        terms_of_service = "https://example.com/legal/terms",
+        external_docs(url = "https://docs.example.com", description = "Full documentation")
+    ),
+    channels("events"),
+    messages(Event)
+)]
+pub struct ProductionApi;
+```
+
+## Message Examples 💡
 
 Provide example payloads to help consumers understand message formats:
 
@@ -254,7 +338,7 @@ pub struct OrderCreated {
 }
 ```
 
-## Message Headers
+## Message Headers 📋
 
 Define message headers using a separate type:
 
@@ -280,7 +364,7 @@ pub struct OrderCreated {
 }
 ```
 
-## Complete Example with Examples and Headers
+## Complete Example with Examples and Headers 🎯
 
 ```rust
 use protofolio::AsyncApi;
@@ -325,9 +409,9 @@ pub struct OrderApi;
 let spec = OrderApi::asyncapi();
 ```
 
-## Correlation IDs
+## Correlation IDs 🔗
 
-Correlation IDs help track related messages across your system:
+Correlation IDs help track related messages across your system - keep everything connected! 🎯
 
 ```rust
 #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
@@ -360,9 +444,46 @@ pub struct OrderStatusChanged {
 }
 ```
 
-## Components and `$ref` References
+## Root-Level Tags 🏷️
 
-Use components to define reusable messages that can be referenced from multiple channels:
+Root-level tags provide reusable tag definitions at the specification level. These tags can be referenced by name in messages and operations, providing a centralized way to organize and document your API - super organized! 🎯
+
+```rust
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(title = "E-Commerce API", version = "1.0.0"),
+    tags(
+        (name = "orders", description = "Order-related operations and events"),
+        (name = "payments", description = "Payment processing events"),
+        (name = "users", description = "User management operations")
+    ),
+    channels("order.created", "payment.processed"),
+    messages(OrderCreated, PaymentProcessed)
+)]
+pub struct ECommerceApi;
+```
+
+Tags can have optional descriptions - add them for better docs! 📝
+
+```rust
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(title = "My API", version = "1.0.0"),
+    tags(
+        (name = "orders", description = "Order operations"),
+        (name = "events")  // Description is optional
+    ),
+    channels("order.created"),
+    messages(OrderCreated)
+)]
+pub struct MyApi;
+```
+
+Root-level tags are serialized in the generated AsyncAPI specification and can be used by documentation tools to organize and filter operations and messages. Pretty neat! ✨
+
+## Components and `$ref` References 🔗
+
+Use components to define reusable messages that can be referenced from multiple channels - DRY at its finest! 💧
 
 ```rust
 use protofolio::{AsyncApiBuilder, Message, MessagePayload, MessageOrRef, Channel, Info};
@@ -375,6 +496,9 @@ let spec = AsyncApiBuilder::new()
         version: "1.0.0".to_string(),
         description: None,
         external_docs: None,
+        contact: None,
+        license: None,
+        terms_of_service: None,
     })
     // Define a component message
     .component_message(
@@ -450,6 +574,9 @@ let spec = AsyncApiBuilder::new()
         version: "1.0.0".to_string(),
         description: None,
         external_docs: None,
+        contact: None,
+        license: None,
+        terms_of_service: None,
     })
     // Define a reusable schema component
     .component_schema(
@@ -463,6 +590,107 @@ let spec = AsyncApiBuilder::new()
             },
             "required": ["id", "name", "email"]
         }),
+    )
+    .build();
+```
+
+### Component Parameters, Bindings, and Traits
+
+You can also define reusable parameters, bindings, and traits:
+
+```rust
+use protofolio::{AsyncApiBuilder, Parameter, OperationTrait, MessageTrait, Tag, MessagePayload, CorrelationId, ExternalDocumentation, ChannelBindingsOrRef};
+
+let spec = AsyncApiBuilder::new()
+    .info(Info {
+        title: "My API".to_string(),
+        version: "1.0.0".to_string(),
+        description: None,
+        external_docs: None,
+        contact: None,
+        license: None,
+        terms_of_service: None,
+    })
+    // Reusable parameter component
+    .component_parameter(
+        "UserIdParam".to_string(),
+        Parameter {
+            description: Some("User ID parameter".to_string()),
+            schema: Some(serde_json::json!({"type": "string"})),
+            location: Some("$message.header#/userId".to_string()),
+        },
+    )
+    // Reusable channel bindings component
+    .component_channel_bindings(
+        "KafkaBinding".to_string(),
+        serde_json::json!({
+            "kafka": {
+                "topic": "events",
+                "partitions": 3
+            }
+        }),
+    )
+    // Reusable message bindings component
+    .component_message_bindings(
+        "KafkaMessageBinding".to_string(),
+        serde_json::json!({
+            "kafka": {
+                "key": {"type": "string"}
+            }
+        }),
+    )
+    // Reusable operation trait
+    .component_operation_trait(
+        "CommonTrait".to_string(),
+        OperationTrait {
+            summary: Some("Common operation".to_string()),
+            description: None,
+            tags: Some(vec![Tag {
+                name: "common".to_string(),
+                description: None,
+            }]),
+            external_docs: None,
+            bindings: None,
+        },
+    )
+    // Reusable message trait
+    .component_message_trait(
+        "CommonMessageTrait".to_string(),
+        MessageTrait {
+            headers: Some(MessagePayload {
+                schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "correlation_id": {"type": "string"}
+                    }
+                }),
+            }),
+            correlation_id: Some(CorrelationId {
+                location: "$message.header#/correlationId".to_string(),
+                description: None,
+            }),
+            content_type: Some("application/json".to_string()),
+            name: None,
+            title: None,
+            summary: None,
+            description: None,
+            tags: None,
+            external_docs: None,
+            examples: None,
+            bindings: None,
+        },
+    )
+    // Use component bindings reference
+    .channel(
+        "events".to_string(),
+        Channel {
+            address: "events".to_string(),
+            description: None,
+            messages: HashMap::new(),
+            servers: None,
+            parameters: None,
+            bindings: Some(ChannelBindingsOrRef::component_ref("KafkaBinding")),
+        },
     )
     .build();
 ```

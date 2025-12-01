@@ -32,6 +32,7 @@ export default defineConfig({
                 { text: 'Operations', link: '/guides/operations' },
                 { text: 'Security', link: '/guides/security' },
                 { text: 'Validation', link: '/guides/validation' },
+                { text: 'TypeScript Generation', link: '/guides/typescript-generation' },
                 { text: 'Best Practices', link: '/guides/best-practices' }
               ]
             }

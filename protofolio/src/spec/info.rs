@@ -16,6 +16,33 @@ pub struct ExternalDocumentation {
     pub description: Option<String>,
 }
 
+/// Contact information for the API
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Contact {
+    /// Name of the contact person/organization
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// URL pointing to the contact information
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+
+    /// Email address of the contact person/organization
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+}
+
+/// License information for the API
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct License {
+    /// Name of the license (required)
+    pub name: String,
+
+    /// URL pointing to the license
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+}
+
 /// Information about the API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Info {
@@ -32,6 +59,18 @@ pub struct Info {
     /// External documentation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub external_docs: Option<ExternalDocumentation>,
+
+    /// Contact information
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact: Option<Contact>,
+
+    /// License information
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<License>,
+
+    /// URL to the Terms of Service
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terms_of_service: Option<String>,
 }
 
 /// Server variable definition

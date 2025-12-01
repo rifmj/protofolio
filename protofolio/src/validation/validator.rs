@@ -263,10 +263,16 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
 
     // Validate protocol-specific bindings
     for (channel_name, channel) in &spec.channels {
-        if let Some(ref bindings) = channel.bindings {
+        if let Some(ref bindings_or_ref) = channel.bindings {
             // Validate bindings structure matches protocol
             if let Some(protocol) = get_channel_protocol(channel, spec) {
-                validate_channel_bindings(&protocol, bindings, channel_name)?;
+                // Extract actual bindings value from ChannelBindingsOrRef
+                let bindings_value = match bindings_or_ref {
+                    crate::spec::ChannelBindingsOrRef::Bindings(b) => b,
+                    // For references, we skip validation (component validation happens separately)
+                    crate::spec::ChannelBindingsOrRef::Ref(_) => continue,
+                };
+                validate_channel_bindings(&protocol, bindings_value, channel_name)?;
             }
         }
     }
@@ -313,6 +319,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -339,6 +348,8 @@ mod tests {
                                 examples: None,
                                 headers: None,
                                 correlation_id: None,
+                                traits: None,
+                                bindings: None,
                             }),
                         );
                         m
@@ -361,6 +372,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .build();
 
@@ -378,6 +392,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .build();
 
@@ -395,6 +412,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -421,6 +441,8 @@ mod tests {
                                 examples: None,
                                 headers: None,
                                 correlation_id: None,
+                                traits: None,
+                                bindings: None,
                             }),
                         );
                         m
@@ -446,6 +468,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -474,10 +499,14 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel(
                 "test.channel".to_string(),
                 Channel {
+                    address: "test.channel".to_string(),
                     description: None,
                     messages: {
                         use crate::spec::MessageOrRef;
@@ -499,6 +528,8 @@ mod tests {
                                 examples: None,
                                 headers: None,
                                 correlation_id: None,
+                                traits: None,
+                                bindings: None,
                             }),
                         );
                         m.insert(
@@ -518,6 +549,8 @@ mod tests {
                                 examples: None,
                                 headers: None,
                                 correlation_id: None,
+                                traits: None,
+                                bindings: None,
                             }),
                         );
                         m
@@ -545,6 +578,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .component_message(
                 "CommonMessage".to_string(),
@@ -562,6 +598,9 @@ mod tests {
                     },
                     examples: None,
                     headers: None,
+                    correlation_id: None,
+                    traits: None,
+                    bindings: None,
                 },
             )
             .channel(
@@ -597,6 +636,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -635,6 +677,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .component_message(
                 "ComponentMsg".to_string(),
@@ -653,6 +698,8 @@ mod tests {
                     examples: None,
                     headers: None,
                     correlation_id: None,
+                    traits: None,
+                    bindings: None,
                 },
             )
             .channel(
@@ -679,6 +726,8 @@ mod tests {
                                 examples: None,
                                 headers: None,
                                 correlation_id: None,
+                                traits: None,
+                                bindings: None,
                             }),
                         );
                         m
@@ -707,6 +756,8 @@ mod tests {
                 description: None,
                 tags: None,
                 external_docs: None,
+                traits: None,
+                bindings: None,
             },
         );
         spec.operations = Some(operations);

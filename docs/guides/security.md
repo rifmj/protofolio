@@ -1,12 +1,12 @@
-# Security Schemes Guide
+# Security Schemes Guide 🔐
 
-This guide covers how to define and use security schemes in your AsyncAPI specifications.
+This guide covers how to define and use security schemes in your AsyncAPI specifications. Keep your API secure! 🛡️
 
-## Overview
+## Overview 📋
 
-Security schemes define authentication and authorization mechanisms for your API. `protofolio` supports all AsyncAPI 3.0 security scheme types, allowing you to secure your servers and operations.
+Security schemes define authentication and authorization mechanisms for your API. `protofolio` supports all AsyncAPI 3.0 security scheme types, allowing you to secure your servers and operations. Safety first! ✅
 
-## Supported Security Scheme Types
+## Supported Security Scheme Types 🎯
 
 - **userPassword** - User and password authentication
 - **apiKey** - API key authentication
@@ -19,11 +19,11 @@ Security schemes define authentication and authorization mechanisms for your API
 - **asymmetricEncryption** - Asymmetric encryption
 - **mutualTLS** - Mutual TLS authentication
 
-## Basic Usage
+## Basic Usage 🚀
 
-### Defining Security Schemes
+### Defining Security Schemes 🔑
 
-Define security schemes in the `security_schemes` attribute of your `AsyncApi` struct:
+Define security schemes in the `security_schemes` attribute of your `AsyncApi` struct - let's secure it! 🔒
 
 ```rust
 use protofolio::AsyncApi;

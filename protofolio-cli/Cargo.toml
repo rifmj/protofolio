@@ -1,0 +1,28 @@
+[package]
+name = "protofolio-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors = ["Rifat Dzhumagulov <jum.rifm@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "CLI tool for generating TypeScript types from AsyncAPI specifications"
+repository = "https://github.com/rifmj/protofolio"
+homepage = "https://github.com/rifmj/protofolio"
+keywords = ["asyncapi", "typescript", "code-generation", "cli"]
+categories = ["development-tools", "command-line-utilities"]
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "protofolio"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml_ng = { workspace = true }
+thiserror = { workspace = true }
+protofolio = { version = "0.1.0", path = "../protofolio" }
+

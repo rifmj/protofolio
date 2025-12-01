@@ -1,6 +1,6 @@
 //! Code generation for servers, channels, and impl block in `AsyncApi` derive macro
 
-use crate::asyncapi::attrs::{SecuritySchemeAttrs, ServerAttrs};
+use crate::asyncapi::attrs::{SecuritySchemeAttrs, ServerAttrs, TagAttrs};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
@@ -356,6 +356,41 @@ pub fn generate_operations_map_try_code(operations: &[TokenStream]) -> TokenStre
     }
 }
 
+/// Generate code for root-level tags
+pub fn generate_tags_code(tags: &[TagAttrs]) -> TokenStream {
+    if tags.is_empty() {
+        quote! {
+            let tags_vec: Option<Vec<protofolio::Tag>> = None;
+        }
+    } else {
+        let tag_code: Vec<TokenStream> = tags
+            .iter()
+            .map(|tag| {
+                let name_lit = &tag.name;
+                let desc_expr = tag.description.as_ref().map_or_else(
+                    || quote! { None },
+                    |desc| {
+                        let desc_str = desc.value();
+                        quote! { Some(#desc_str.to_string()) }
+                    },
+                );
+                quote! {
+                    protofolio::Tag {
+                        name: #name_lit.to_string(),
+                        description: #desc_expr,
+                    }
+                }
+            })
+            .collect();
+
+        quote! {
+            let tags_vec: Option<Vec<protofolio::Tag>> = Some(vec![
+                #(#tag_code),*
+            ]);
+        }
+    }
+}
+
 /// Generate the complete impl block for AsyncApi trait
 pub fn generate_impl_block(
     ident: &Ident,
@@ -363,6 +398,9 @@ pub fn generate_impl_block(
     info_version: &str,
     info_desc_expr: TokenStream,
     info_external_docs_expr: TokenStream,
+    info_contact_expr: TokenStream,
+    info_license_expr: TokenStream,
+    info_terms_of_service_expr: TokenStream,
     servers: &[TokenStream],
     security_schemes_code: TokenStream,
     channels: &[TokenStream],
@@ -370,6 +408,7 @@ pub fn generate_impl_block(
     messages_try: &[TokenStream],
     operations_code: TokenStream,
     operations_code_try: TokenStream,
+    tags_code: TokenStream,
 ) -> TokenStream {
     quote! {
         impl protofolio::AsyncApi for #ident {
@@ -385,6 +424,9 @@ pub fn generate_impl_block(
                         version: #info_version.to_string(),
                         description: #info_desc_expr,
                         external_docs: #info_external_docs_expr,
+                        contact: #info_contact_expr,
+                        license: #info_license_expr,
+                        terms_of_service: #info_terms_of_service_expr,
                     });
 
                 // Add servers
@@ -425,6 +467,10 @@ pub fn generate_impl_block(
                     }
                 }
 
+                // Add root-level tags if any
+                #tags_code
+                spec.tags = tags_vec;
+
                 spec
             }
 
@@ -440,6 +486,9 @@ pub fn generate_impl_block(
                         version: #info_version.to_string(),
                         description: #info_desc_expr,
                         external_docs: #info_external_docs_expr,
+                        contact: #info_contact_expr,
+                        license: #info_license_expr,
+                        terms_of_service: #info_terms_of_service_expr,
                     });
 
                 // Add servers
@@ -479,6 +528,10 @@ pub fn generate_impl_block(
                         components.security_schemes = Some(schemes.clone());
                     }
                 }
+
+                // Add root-level tags if any
+                #tags_code
+                spec.tags = tags_vec;
 
                 // Validate the spec
                 protofolio::validate_spec(&spec)?;

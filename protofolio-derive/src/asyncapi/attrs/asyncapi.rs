@@ -3,7 +3,7 @@
 use crate::parse_utils::parse_optional_comma;
 use syn::{parse::Parse, Error, LitStr, Token};
 
-use super::{info::InfoAttrs, security::SecuritySchemeAttrs, server::ServerAttrs};
+use super::{info::InfoAttrs, security::SecuritySchemeAttrs, server::ServerAttrs, tag::TagAttrs};
 
 /// Parser structure for asyncapi attributes
 pub struct AsyncApiAttrs {
@@ -13,6 +13,7 @@ pub struct AsyncApiAttrs {
     pub channels: Vec<LitStr>,
     pub messages: Vec<syn::Path>,
     pub operations: Vec<syn::Path>,
+    pub tags: Vec<TagAttrs>,
 }
 
 impl Parse for AsyncApiAttrs {
@@ -23,6 +24,7 @@ impl Parse for AsyncApiAttrs {
         let mut channels = Vec::new();
         let mut messages = Vec::new();
         let mut operations = Vec::new();
+        let mut tags = Vec::new();
 
         while !input.is_empty() {
             let ident: syn::Ident = input.parse()?;
@@ -81,11 +83,22 @@ impl Parse for AsyncApiAttrs {
                         content.parse::<Token![,]>()?;
                     }
                 }
+            } else if ident_str == "tags" {
+                let content;
+                syn::parenthesized!(content in input);
+                while !content.is_empty() {
+                    let content2;
+                    syn::parenthesized!(content2 in content);
+                    tags.push(content2.parse()?);
+                    if content.peek(Token![,]) {
+                        content.parse::<Token![,]>()?;
+                    }
+                }
             } else {
                 return Err(Error::new_spanned(
                         &ident,
                         format!(
-                            "Unexpected identifier '{ident_str}'. Expected one of: info, servers, security_schemes, channels, messages, operations\n\nExample: #[asyncapi(info(title = \"...\", version = \"...\"), channels(\"channel1\"), messages(Message1))]"
+                            "Unexpected identifier '{ident_str}'. Expected one of: info, servers, security_schemes, channels, messages, operations, tags\n\nExample: #[asyncapi(info(title = \"...\", version = \"...\"), channels(\"channel1\"), messages(Message1), tags((name = \"orders\", description = \"Order operations\")))]"
                         ),
                     ));
             }
@@ -100,6 +113,7 @@ impl Parse for AsyncApiAttrs {
             channels,
             messages,
             operations,
+            tags,
         })
     }
 }

@@ -79,9 +79,9 @@ pub struct Channel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, Parameter>>,
 
-    /// Protocol-specific bindings
+    /// Protocol-specific bindings (inline or reference to component)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bindings: Option<serde_json::Value>,
+    pub bindings: Option<ChannelBindingsOrRef>,
 }
 
 /// Correlation ID definition
@@ -144,6 +144,14 @@ pub struct Message {
     /// Correlation ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correlation_id: Option<CorrelationId>,
+
+    /// Message traits (reusable message properties)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub traits: Option<Vec<MessageTraitOrRef>>,
+
+    /// Protocol-specific message bindings
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bindings: Option<MessageBindingsOrRef>,
 }
 
 /// Message payload schema
@@ -163,6 +171,90 @@ pub struct Tag {
     /// Tag description
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+}
+
+/// Channel bindings or reference to component bindings
+///
+/// In AsyncAPI 3.0, channel bindings can be either:
+/// - Inline bindings (JSON object)
+/// - References to reusable component bindings using `$ref`
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ChannelBindingsOrRef {
+    /// Inline bindings (JSON object)
+    Bindings(serde_json::Value),
+    /// Reference to component bindings
+    Ref(crate::spec::operation::MessageReference),
+}
+
+impl ChannelBindingsOrRef {
+    /// Create ChannelBindingsOrRef from inline bindings
+    pub fn bindings(bindings: serde_json::Value) -> Self {
+        Self::Bindings(bindings)
+    }
+
+    /// Create ChannelBindingsOrRef from a component reference
+    pub fn component_ref(component_name: &str) -> Self {
+        Self::Ref(crate::spec::operation::MessageReference {
+            ref_path: format!("#/components/channelBindings/{}", component_name),
+        })
+    }
+}
+
+/// Message trait or reference to a component message trait
+///
+/// In AsyncAPI 3.0, message traits can be either:
+/// - Inline trait definitions
+/// - References to reusable components using `$ref`
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MessageTraitOrRef {
+    /// Inline message trait definition
+    Trait(crate::spec::MessageTrait),
+    /// Reference to a component message trait
+    Ref(crate::spec::operation::MessageReference),
+}
+
+impl MessageTraitOrRef {
+    /// Create a MessageTraitOrRef from an inline MessageTrait
+    pub fn trait_(trait_: crate::spec::MessageTrait) -> Self {
+        Self::Trait(trait_)
+    }
+
+    /// Create a MessageTraitOrRef from a component reference
+    pub fn component_ref(component_name: &str) -> Self {
+        Self::Ref(crate::spec::operation::MessageReference {
+            ref_path: format!("#/components/messageTraits/{}", component_name),
+        })
+    }
+}
+
+/// Message bindings or reference to component bindings
+///
+/// In AsyncAPI 3.0, message bindings can be either:
+/// - Inline bindings (JSON object)
+/// - References to reusable component bindings using `$ref`
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MessageBindingsOrRef {
+    /// Inline bindings (JSON object)
+    Bindings(serde_json::Value),
+    /// Reference to component bindings
+    Ref(crate::spec::operation::MessageReference),
+}
+
+impl MessageBindingsOrRef {
+    /// Create MessageBindingsOrRef from inline bindings
+    pub fn bindings(bindings: serde_json::Value) -> Self {
+        Self::Bindings(bindings)
+    }
+
+    /// Create MessageBindingsOrRef from a component reference
+    pub fn component_ref(component_name: &str) -> Self {
+        Self::Ref(crate::spec::operation::MessageReference {
+            ref_path: format!("#/components/messageBindings/{}", component_name),
+        })
+    }
 }
 
 /// Parameter definition for channels

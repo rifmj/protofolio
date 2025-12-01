@@ -56,8 +56,33 @@ async fn asyncapi_yaml() -> Result<Response<String>, StatusCode> {
 }
 ```
 
+## TypeScript Type Generation
+
+Generate TypeScript types from your AsyncAPI specifications:
+
+```bash
+# Generate AsyncAPI spec
+cargo run --example generate_spec --package protofolio > asyncapi.json
+
+# Generate TypeScript types
+./target/release/protofolio generate --spec asyncapi.json --output ./types
+```
+
+Then use the generated types in your TypeScript project:
+
+```typescript
+import { Event } from "./types";
+
+const event: Event = {
+  id: "123",
+  data: "example",
+};
+```
+
+See the [TypeScript Generation Guide](../guides/typescript-generation.md) for more details.
+
 ## See Also
 
 - [Basic Examples](basic.md) - Basic usage examples
 - [Advanced Examples](advanced.md) - Advanced patterns
-
+- [TypeScript Generation Guide](../guides/typescript-generation.md) - Generate TypeScript types from AsyncAPI specs

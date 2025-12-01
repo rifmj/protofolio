@@ -103,6 +103,12 @@ fn test_kafka_spec_with_builder() {
                             payload: MessagePayload {
                                 schema: serde_json::json!({"type": "object"}),
                             },
+                            external_docs: None,
+                            examples: None,
+                            headers: None,
+                            correlation_id: None,
+                            traits: None,
+                            bindings: None,
                         },
                     );
                     m
@@ -167,6 +173,12 @@ fn test_mqtt_spec_with_builder() {
                             payload: MessagePayload {
                                 schema: serde_json::json!({"type": "object"}),
                             },
+                            external_docs: None,
+                            examples: None,
+                            headers: None,
+                            correlation_id: None,
+                            traits: None,
+                            bindings: None,
                         },
                     );
                     m
@@ -249,6 +261,12 @@ fn test_protocol_validation() {
                             payload: MessagePayload {
                                 schema: serde_json::json!({"type": "object"}),
                             },
+                            external_docs: None,
+                            examples: None,
+                            headers: None,
+                            correlation_id: None,
+                            traits: None,
+                            bindings: None,
                         },
                     );
                     m

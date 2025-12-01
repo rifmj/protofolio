@@ -62,6 +62,8 @@ pub fn generate_messages_code(messages: &[syn::Path], ident: &Ident) -> Vec<Toke
                         examples: #message_type_ident::examples(),
                         headers: #message_type_ident::headers(),
                         correlation_id: #message_type_ident::correlation_id(),
+                        traits: None,
+                        bindings: None,
                     };
 
                     channels_map.get_mut(channel_name)
@@ -125,6 +127,8 @@ pub fn generate_messages_try_code(messages: &[syn::Path], ident: &Ident) -> Vec<
                         examples: #message_type_ident::examples(),
                         headers: #message_type_ident::headers(),
                         correlation_id: #message_type_ident::correlation_id(),
+                        traits: None,
+                        bindings: None,
                     };
 
                     channels_map.get_mut(channel_name)

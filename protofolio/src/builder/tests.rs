@@ -22,6 +22,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: Some("Test description".to_string()),
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .build();
 
@@ -38,6 +41,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .server(
                 "nats".to_string(),
@@ -89,6 +95,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .server(
                 "nats".to_string(),
@@ -131,6 +140,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -170,6 +182,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel_with_params(
                 "trip.{tripId}".to_string(),
@@ -205,6 +220,9 @@ mod tests {
                 version: "1.0.0".to_string(),
                 description: None,
                 external_docs: None,
+                contact: None,
+                license: None,
+                terms_of_service: None,
             })
             .channel_with_bindings(
                 "test.channel".to_string(),

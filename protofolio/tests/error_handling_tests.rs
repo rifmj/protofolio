@@ -1,7 +1,8 @@
 //! Tests for error handling in try_asyncapi()
 
 use protofolio::{
-    AsyncApi, AsyncApiBuilder, Channel, Info, Message, MessagePayload, ValidationError,
+    AsyncApi, AsyncApiBuilder, Channel, Info, Message, MessageOrRef, MessagePayload,
+    ValidationError,
 };
 use protofolio_derive::{AsyncApi, AsyncApiMessage};
 use schemars::JsonSchema;
@@ -60,6 +61,10 @@ fn test_validation_error_on_invalid_spec() {
             title: "Test".to_string(),
             version: "1.0.0".to_string(),
             description: None,
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .build();
 
@@ -82,10 +87,15 @@ fn test_validation_error_channel_without_messages() {
             title: "Test".to_string(),
             version: "1.0.0".to_string(),
             description: None,
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .channel(
             "empty.channel".to_string(),
             Channel {
+                address: "empty.channel".to_string(),
                 description: None,
                 messages: HashMap::new(),
                 servers: None,
@@ -111,7 +121,7 @@ fn test_validation_error_duplicate_message_id() {
     let mut messages1 = HashMap::new();
     messages1.insert(
         "Message1".to_string(),
-        Message {
+        MessageOrRef::Message(Message {
             message_id: Some("duplicate-id".to_string()),
             name: None,
             title: None,
@@ -122,13 +132,19 @@ fn test_validation_error_duplicate_message_id() {
             payload: MessagePayload {
                 schema: serde_json::json!({"type": "object"}),
             },
-        },
+            external_docs: None,
+            examples: None,
+            headers: None,
+            correlation_id: None,
+            traits: None,
+            bindings: None,
+        }),
     );
 
     let mut messages2 = HashMap::new();
     messages2.insert(
         "Message2".to_string(),
-        Message {
+        MessageOrRef::Message(Message {
             message_id: Some("duplicate-id".to_string()),
             name: None,
             title: None,
@@ -139,7 +155,13 @@ fn test_validation_error_duplicate_message_id() {
             payload: MessagePayload {
                 schema: serde_json::json!({"type": "object"}),
             },
-        },
+            external_docs: None,
+            examples: None,
+            headers: None,
+            correlation_id: None,
+            traits: None,
+            bindings: None,
+        }),
     );
 
     let invalid_spec = AsyncApiBuilder::new()
@@ -147,10 +169,15 @@ fn test_validation_error_duplicate_message_id() {
             title: "Test".to_string(),
             version: "1.0.0".to_string(),
             description: None,
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .channel(
             "channel1".to_string(),
             Channel {
+                address: "channel1".to_string(),
                 description: None,
                 messages: messages1,
                 servers: None,
@@ -161,6 +188,7 @@ fn test_validation_error_duplicate_message_id() {
         .channel(
             "channel2".to_string(),
             Channel {
+                address: "channel2".to_string(),
                 description: None,
                 messages: messages2,
                 servers: None,
@@ -188,6 +216,10 @@ fn test_error_message_quality() {
             title: "Test".to_string(),
             version: "1.0.0".to_string(),
             description: None,
+            external_docs: None,
+            contact: None,
+            license: None,
+            terms_of_service: None,
         })
         .build();
 

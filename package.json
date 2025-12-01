@@ -8,6 +8,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
+  "dependencies": {
+    "@asyncapi/modelina": "^2.0.0"
+  },
   "devDependencies": {
     "vitepress": "^1.6.0"
   }
