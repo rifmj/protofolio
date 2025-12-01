@@ -1,9 +1,11 @@
 //! AsyncAPI specification validator implementation
 
 use crate::error::ValidationError;
+use crate::protocol;
 use crate::spec::*;
 use crate::types::ASYNCAPI_VERSION;
-use crate::protocol;
+
+use super::bindings::{get_channel_protocol, validate_channel_bindings};
 
 /// Validate an AsyncAPI specification
 ///
@@ -35,15 +37,21 @@ use crate::protocol;
 pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
     // Validate AsyncAPI version
     if spec.asyncapi != ASYNCAPI_VERSION {
-        return Err(ValidationError::InvalidAsyncApiVersion(spec.asyncapi.clone()));
+        return Err(ValidationError::InvalidAsyncApiVersion(
+            spec.asyncapi.clone(),
+        ));
     }
 
     // Validate info section
     if spec.info.title.is_empty() {
-        return Err(ValidationError::MissingRequiredField("info.title".to_string()));
+        return Err(ValidationError::MissingRequiredField(
+            "info.title".to_string(),
+        ));
     }
     if spec.info.version.is_empty() {
-        return Err(ValidationError::MissingRequiredField("info.version".to_string()));
+        return Err(ValidationError::MissingRequiredField(
+            "info.version".to_string(),
+        ));
     }
 
     // Validate channels
@@ -65,7 +73,9 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
     for (channel_name, channel) in &spec.channels {
         // Check if channel has messages
         if channel.messages.is_empty() {
-            return Err(ValidationError::ChannelWithoutMessages(channel_name.clone()));
+            return Err(ValidationError::ChannelWithoutMessages(
+                channel_name.clone(),
+            ));
         }
 
         // Validate server references in channel
@@ -78,7 +88,10 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
                     } else {
                         format!("Server '{}' not found. Available servers: {:?}. Update your channel's server reference or add the server in servers(...)", server_name, available)
                     };
-                    return Err(ValidationError::InvalidServerReference(format!("{}: {}", server_name, suggestion)));
+                    return Err(ValidationError::InvalidServerReference(format!(
+                        "{}: {}",
+                        server_name, suggestion
+                    )));
                 }
             }
         }
@@ -111,7 +124,7 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
             // Validate channel reference format
             if !op.channel.ref_path.starts_with("#/channels/") {
                 return Err(ValidationError::InvalidChannelReference(
-                    op.channel.ref_path.clone()
+                    op.channel.ref_path.clone(),
                 ));
             }
 
@@ -130,16 +143,16 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
     // Validate protocol identifiers
     if let Some(ref servers) = spec.servers {
         for (server_name, server) in servers {
-            protocol::validate_protocol(&server.protocol)
-                .map_err(|e| match e {
-                    ValidationError::UnsupportedProtocol { protocol, supported } => {
-                    ValidationError::InvalidProtocol(format!(
-                        "Server '{}' uses unsupported protocol '{}'. Supported protocols: {:?}",
-                            server_name, protocol, supported
-                    ))
-                    }
-                    _ => e,
-                })?;
+            protocol::validate_protocol(&server.protocol).map_err(|e| match e {
+                ValidationError::UnsupportedProtocol {
+                    protocol,
+                    supported,
+                } => ValidationError::InvalidProtocol(format!(
+                    "Server '{}' uses unsupported protocol '{}'. Supported protocols: {:?}",
+                    server_name, protocol, supported
+                )),
+                _ => e,
+            })?;
         }
     }
 
@@ -156,72 +169,6 @@ pub fn validate_spec(spec: &AsyncApiSpec) -> Result<(), ValidationError> {
     Ok(())
 }
 
-/// Get the protocol for a channel based on its server references
-fn get_channel_protocol(
-    channel: &Channel,
-    spec: &AsyncApiSpec,
-) -> Option<String> {
-    // Determine protocol from channel's server references
-    if let Some(ref servers) = channel.servers {
-        if let Some(ref spec_servers) = spec.servers {
-            for server_name in servers {
-                if let Some(server) = spec_servers.get(server_name) {
-                    return Some(server.protocol.clone());
-                }
-            }
-        }
-    }
-    None
-}
-
-/// Validate channel bindings match the protocol
-fn validate_channel_bindings(
-    protocol: &str,
-    bindings: &serde_json::Value,
-    channel_name: &str,
-) -> Result<(), ValidationError> {
-    match protocol {
-        "kafka" => {
-            // Validate Kafka bindings structure
-            if !bindings.as_object()
-                .and_then(|o| o.get("kafka"))
-                .is_some() {
-                return Err(ValidationError::InvalidSchema(format!(
-                    "Channel '{}': Kafka channel bindings must have 'kafka' key",
-                    channel_name
-                )));
-            }
-        }
-        "mqtt" => {
-            // Validate MQTT bindings structure
-            if !bindings.as_object()
-                .and_then(|o| o.get("mqtt"))
-                .is_some() {
-                return Err(ValidationError::InvalidSchema(format!(
-                    "Channel '{}': MQTT channel bindings must have 'mqtt' key",
-                    channel_name
-                )));
-            }
-        }
-        "nats" => {
-            // Validate NATS bindings structure
-            if !bindings.as_object()
-                .and_then(|o| o.get("nats"))
-                .is_some() {
-                return Err(ValidationError::InvalidSchema(format!(
-                    "Channel '{}': NATS channel bindings must have 'nats' key",
-                    channel_name
-                )));
-            }
-        }
-        _ => {
-            // Unknown protocol, but we already validated protocol identifier
-            // so we can skip binding validation
-        }
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -235,6 +182,7 @@ mod tests {
                 title: "Test API".to_string(),
                 version: "1.0.0".to_string(),
                 description: None,
+                external_docs: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -250,11 +198,14 @@ mod tests {
                                 title: None,
                                 summary: None,
                                 description: None,
+                                external_docs: None,
                                 content_type: None,
                                 tags: None,
                                 payload: MessagePayload {
                                     schema: serde_json::json!({"type": "object"}),
                                 },
+                                examples: None,
+                                headers: None,
                             },
                         );
                         m
@@ -276,6 +227,7 @@ mod tests {
                 title: String::new(),
                 version: "1.0.0".to_string(),
                 description: None,
+                external_docs: None,
             })
             .build();
 
@@ -292,6 +244,7 @@ mod tests {
                 title: "Test".to_string(),
                 version: "1.0.0".to_string(),
                 description: None,
+                external_docs: None,
             })
             .build();
 
@@ -308,6 +261,7 @@ mod tests {
                 title: "Test".to_string(),
                 version: "1.0.0".to_string(),
                 description: None,
+                external_docs: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -323,11 +277,14 @@ mod tests {
                                 title: None,
                                 summary: None,
                                 description: None,
+                                external_docs: None,
                                 content_type: None,
                                 tags: None,
                                 payload: MessagePayload {
                                     schema: serde_json::json!({"type": "object"}),
                                 },
+                                examples: None,
+                                headers: None,
                             },
                         );
                         m
@@ -352,6 +309,7 @@ mod tests {
                 title: "Test".to_string(),
                 version: "1.0.0".to_string(),
                 description: None,
+                external_docs: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -378,6 +336,7 @@ mod tests {
                 title: "Test".to_string(),
                 version: "1.0.0".to_string(),
                 description: None,
+                external_docs: None,
             })
             .channel(
                 "test.channel".to_string(),
@@ -395,9 +354,12 @@ mod tests {
                                 description: None,
                                 content_type: None,
                                 tags: None,
+                                external_docs: None,
                                 payload: MessagePayload {
                                     schema: serde_json::json!({"type": "object"}),
                                 },
+                                examples: None,
+                                headers: None,
                             },
                         );
                         m.insert(
@@ -410,9 +372,12 @@ mod tests {
                                 description: None,
                                 content_type: None,
                                 tags: None,
+                                external_docs: None,
                                 payload: MessagePayload {
                                     schema: serde_json::json!({"type": "object"}),
                                 },
+                                examples: None,
+                                headers: None,
                             },
                         );
                         m
@@ -430,4 +395,3 @@ mod tests {
         ));
     }
 }
-

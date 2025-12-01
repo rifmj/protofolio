@@ -121,6 +121,36 @@ let spec = AsyncApiBuilder::new()
     .build();
 ```
 
+## Security Schemes
+
+Advanced security configuration with multiple scheme types:
+
+```rust
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(title = "Secure Multi-Protocol API", version = "1.0.0"),
+    servers(
+        (name = "nats", url = "nats://localhost:4222", protocol = "nats", security = ["bearerAuth"]),
+        (name = "kafka", url = "kafka://localhost:9092", protocol = "kafka", security = ["apiKey"])
+    ),
+    security_schemes(
+        // HTTP Bearer token authentication
+        (name = "bearerAuth", type = "http", scheme = "bearer", bearer_format = "JWT", description = "JWT Bearer token"),
+        // API Key in header
+        (name = "apiKey", type = "apiKey", in = "header", description = "API key authentication"),
+        // HTTP Basic authentication
+        (name = "basicAuth", type = "http", scheme = "basic", description = "Basic HTTP authentication"),
+        // HTTP API Key (alternative to apiKey)
+        (name = "headerApiKey", type = "httpApiKey", name_param = "X-API-Key", in = "header", description = "API key in X-API-Key header"),
+        // User/Password authentication
+        (name = "userPassword", type = "userPassword", description = "User and password authentication")
+    ),
+    channels("events"),
+    messages(Event)
+)]
+pub struct SecureMultiProtocolApi;
+```
+
 ## Error Handling
 
 Example with comprehensive error handling:

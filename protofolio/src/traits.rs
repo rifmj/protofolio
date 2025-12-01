@@ -167,6 +167,11 @@ pub trait AsyncApiOperation {
     /// Get the tags
     fn tags() -> Option<Vec<crate::spec::Tag>>;
     
+    /// Get the external documentation
+    fn external_docs() -> Option<crate::spec::ExternalDocumentation> {
+        None
+    }
+    
     /// Convert this operation to an Operation struct
     fn to_operation() -> Operation {
         use crate::spec::{ChannelReference, MessageReference};
@@ -187,6 +192,7 @@ pub trait AsyncApiOperation {
             summary: Self::summary().map(|s| s.to_string()),
             description: Self::description().map(|s| s.to_string()),
             tags: Self::tags(),
+            external_docs: Self::external_docs(),
         }
     }
 }

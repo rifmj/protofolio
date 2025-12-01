@@ -42,6 +42,7 @@ The `AsyncApiOperation` derive macro supports the following attributes:
 - `summary` - Brief summary of the operation
 - `description` - Detailed description
 - `tags` - Array of tag names (e.g., `tags = ["orders", "events"]`)
+- `external_docs` - External documentation reference (e.g., `external_docs(url = "https://example.com/docs", description = "Documentation")`)
 
 ## Send Operations
 
@@ -56,7 +57,8 @@ Send operations define how messages are published:
     messages(OrderCreated),
     summary = "Publish order created event",
     description = "Published when a new order is created",
-    tags = ["orders", "events"]
+    tags = ["orders", "events"],
+    external_docs(url = "https://example.com/docs/operations", description = "Operation documentation")
 )]
 pub struct PublishOrderCreated;
 ```

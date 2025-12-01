@@ -48,6 +48,81 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                 }
             };
             
+            // Generate variables if present
+            let variables_expr = if server.variables.is_empty() {
+                quote! { None }
+            } else {
+                let var_code: Vec<TokenStream> = server.variables
+                    .iter()
+                    .map(|var| {
+                        let var_name = &var.name;
+                        let var_name_str = var_name.value();
+                        
+                        let default_expr = var.default.as_ref().map_or_else(
+                            || quote! { None },
+                            |default| {
+                                let default_str = default.value();
+                                quote! { Some(#default_str.to_string()) }
+                            },
+                        );
+                        
+                        let description_expr = var.description.as_ref().map_or_else(
+                            || quote! { None },
+                            |desc| {
+                                let desc_str = desc.value();
+                                quote! { Some(#desc_str.to_string()) }
+                            },
+                        );
+                        
+                        let enum_expr = var.enum_values.as_ref().map_or_else(
+                            || quote! { None },
+                            |enum_vals| {
+                                let enum_strs: Vec<String> = enum_vals.iter().map(|v| v.value()).collect();
+                                quote! {
+                                    Some(vec![
+                                        #(#enum_strs.to_string()),*
+                                    ])
+                                }
+                            },
+                        );
+                        
+                        let examples_expr = var.examples.as_ref().map_or_else(
+                            || quote! { None },
+                            |examples| {
+                                let example_strs: Vec<String> = examples.iter().map(|v| v.value()).collect();
+                                quote! {
+                                    Some(vec![
+                                        #(#example_strs.to_string()),*
+                                    ])
+                                }
+                            },
+                        );
+                        
+                        quote! {
+                            (
+                                #var_name_str.to_string(),
+                                protofolio::ServerVariable {
+                                    enum_values: #enum_expr,
+                                    default: #default_expr,
+                                    description: #description_expr,
+                                    examples: #examples_expr,
+                                }
+                            )
+                        }
+                    })
+                    .collect();
+                
+                quote! {
+                    {
+                        let mut vars = std::collections::HashMap::new();
+                        #(
+                            vars.insert(#var_code);
+                        )*
+                        Some(vars)
+                    }
+                }
+            };
+            
             quote! {
                 builder = builder.server(
                     #name_lit.to_string(),
@@ -56,6 +131,7 @@ pub fn generate_servers_code(servers: &[ServerAttrs]) -> Vec<TokenStream> {
                         protocol: #protocol_lit.to_string(),
                         description: None,
                         security: #security_expr,
+                        variables: #variables_expr,
                     }
                 );
             }
@@ -107,9 +183,7 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     "http" => {
-                        let scheme_val = scheme.scheme.as_ref().unwrap_or_else(|| {
-                            panic!("http security scheme requires 'scheme' attribute (e.g., 'basic', 'bearer')");
-                        });
+                        let scheme_val = scheme.scheme.as_ref().expect("http security scheme requires 'scheme' attribute (e.g., 'basic', 'bearer')");
                         let scheme_str = scheme_val.value();
                         let bearer_format_expr = scheme.bearer_format.as_ref().map_or_else(
                             || quote! { None },
@@ -127,13 +201,9 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     "httpApiKey" => {
-                        let name_param = scheme.name_param.as_ref().unwrap_or_else(|| {
-                            panic!("httpApiKey security scheme requires 'name_param' attribute");
-                        });
+                        let name_param = scheme.name_param.as_ref().expect("httpApiKey security scheme requires 'name_param' attribute");
                         let name_param_str = name_param.value();
-                        let in_val = scheme.in_.as_ref().unwrap_or_else(|| {
-                            panic!("httpApiKey security scheme requires 'in' attribute (e.g., 'header', 'query', 'cookie')");
-                        });
+                        let in_val = scheme.in_.as_ref().expect("httpApiKey security scheme requires 'in' attribute (e.g., 'header', 'query', 'cookie')");
                         let in_str = in_val.value();
                         quote! {
                             protofolio::SecurityScheme::HttpApiKey {
@@ -144,9 +214,7 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     "openIdConnect" => {
-                        let oidc_url = scheme.open_id_connect_url.as_ref().unwrap_or_else(|| {
-                            panic!("openIdConnect security scheme requires 'open_id_connect_url' attribute");
-                        });
+                        let oidc_url = scheme.open_id_connect_url.as_ref().expect("openIdConnect security scheme requires 'open_id_connect_url' attribute");
                         let oidc_url_str = oidc_url.value();
                         quote! {
                             protofolio::SecurityScheme::OpenIdConnect {
@@ -199,7 +267,11 @@ pub fn generate_security_schemes_code(schemes: &[SecuritySchemeAttrs]) -> TokenS
                         }
                     }
                     _ => {
-                        panic!("Unknown security scheme type: {}. Supported types: userPassword, apiKey, http, httpApiKey, oauth2, openIdConnect, X509, symmetricEncryption, asymmetricEncryption, mutualTLS", scheme_type);
+                        // This should be caught during parsing, but handle gracefully
+                        quote! {
+                            compile_error!(concat!("Unknown security scheme type: ", #scheme_type, ". Supported types: userPassword, apiKey, http, httpApiKey, oauth2, openIdConnect, X509, symmetricEncryption, asymmetricEncryption, mutualTLS"));
+                            protofolio::SecurityScheme::UserPassword { description: None }
+                        }
                     }
                 };
                 
@@ -278,6 +350,7 @@ pub fn generate_impl_block(
     info_title: &str,
     info_version: &str,
     info_desc_expr: TokenStream,
+    info_external_docs_expr: TokenStream,
     servers: &[TokenStream],
     security_schemes_code: TokenStream,
     channels: &[TokenStream],
@@ -299,10 +372,14 @@ pub fn generate_impl_block(
                         title: #info_title.to_string(),
                         version: #info_version.to_string(),
                         description: #info_desc_expr,
+                        external_docs: #info_external_docs_expr,
                     });
                 
                 // Add servers
                 #(#servers)*
+                
+                // Generate security schemes
+                #security_schemes_code
                 
                 // Build channels with messages
                 let mut channels_map: HashMap<String, Channel> = HashMap::new();
@@ -350,6 +427,7 @@ pub fn generate_impl_block(
                         title: #info_title.to_string(),
                         version: #info_version.to_string(),
                         description: #info_desc_expr,
+                        external_docs: #info_external_docs_expr,
                     });
                 
                 // Add servers

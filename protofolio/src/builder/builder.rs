@@ -17,11 +17,13 @@
 //!         title: "My API".to_string(),
 //!         version: "1.0.0".to_string(),
 //!         description: Some("API description".to_string()),
+//!         external_docs: None,
 //!     })
 //!     .server("nats".to_string(), Server {
 //!         url: "nats://localhost:4222".to_string(),
 //!         protocol: "nats".to_string(),
 //!         description: None,
+//!         security: None,
 //!     })
 //!     .channel("events".to_string(), Channel {
 //!         description: None,
@@ -72,6 +74,7 @@ impl AsyncApiBuilder {
                     title: String::new(),
                     version: String::new(),
                     description: None,
+                    external_docs: None,
                 },
                 servers: None,
                 channels: Default::default(),
@@ -186,155 +189,3 @@ impl Default for AsyncApiBuilder {
         Self::new()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::HashMap;
-
-    #[test]
-    fn test_builder_new() {
-        let builder = AsyncApiBuilder::new();
-        let spec = builder.build();
-        assert_eq!(spec.asyncapi, ASYNCAPI_VERSION);
-        assert!(spec.info.title.is_empty());
-        assert!(spec.info.version.is_empty());
-    }
-
-    #[test]
-    fn test_builder_info() {
-        let spec = AsyncApiBuilder::new()
-            .info(Info {
-                title: "Test API".to_string(),
-                version: "1.0.0".to_string(),
-                description: Some("Test description".to_string()),
-            })
-            .build();
-
-        assert_eq!(spec.info.title, "Test API");
-        assert_eq!(spec.info.version, "1.0.0");
-        assert_eq!(spec.info.description, Some("Test description".to_string()));
-    }
-
-    #[test]
-    fn test_builder_server() {
-        let spec = AsyncApiBuilder::new()
-            .info(Info {
-                title: "Test".to_string(),
-                version: "1.0.0".to_string(),
-                description: None,
-            })
-            .server(
-                "nats".to_string(),
-                Server {
-                    url: "nats://localhost:4222".to_string(),
-                    protocol: "nats".to_string(),
-                    description: None,
-                },
-            )
-            .build();
-
-        assert!(spec.servers.is_some());
-        let servers = spec.servers.unwrap();
-        assert!(servers.contains_key("nats"));
-        assert_eq!(servers["nats"].url, "nats://localhost:4222");
-    }
-
-    #[test]
-    fn test_builder_channel() {
-        let spec = AsyncApiBuilder::new()
-            .info(Info {
-                title: "Test".to_string(),
-                version: "1.0.0".to_string(),
-                description: None,
-            })
-            .channel(
-                "test.channel".to_string(),
-                Channel {
-                    description: Some("Test channel".to_string()),
-                    messages: HashMap::new(),
-                    servers: None,
-                    parameters: None,
-                    bindings: None,
-                },
-            )
-            .build();
-
-        assert!(spec.channels.contains_key("test.channel"));
-        assert_eq!(
-            spec.channels["test.channel"].description,
-            Some("Test channel".to_string())
-        );
-    }
-
-    #[test]
-    fn test_builder_channel_with_params() {
-        let mut params = HashMap::new();
-        params.insert(
-            "tripId".to_string(),
-            Parameter {
-                description: Some("Trip ID".to_string()),
-                schema: Some(serde_json::json!({"type": "string"})),
-                location: None,
-            },
-        );
-
-        let spec = AsyncApiBuilder::new()
-            .info(Info {
-                title: "Test".to_string(),
-                version: "1.0.0".to_string(),
-                description: None,
-            })
-            .channel_with_params(
-                "trip.{tripId}".to_string(),
-                Channel {
-                    description: None,
-                    messages: HashMap::new(),
-                    servers: None,
-                    parameters: None,
-                    bindings: None,
-                },
-                params.clone(),
-            )
-            .build();
-
-        assert!(spec.channels.contains_key("trip.{tripId}"));
-        assert!(spec.channels["trip.{tripId}"].parameters.is_some());
-        let channel_params = spec.channels["trip.{tripId}"].parameters.as_ref().unwrap();
-        assert!(channel_params.contains_key("tripId"));
-    }
-
-    #[test]
-    fn test_builder_channel_with_bindings() {
-        let bindings = serde_json::json!({
-            "nats": {
-                "queue": "workers"
-            }
-        });
-
-        let spec = AsyncApiBuilder::new()
-            .info(Info {
-                title: "Test".to_string(),
-                version: "1.0.0".to_string(),
-                description: None,
-            })
-            .channel_with_bindings(
-                "test.channel".to_string(),
-                Channel {
-                    description: None,
-                    messages: HashMap::new(),
-                    servers: None,
-                    parameters: None,
-                    bindings: None,
-                },
-                bindings.clone(),
-            )
-            .build();
-
-        assert!(spec.channels.contains_key("test.channel"));
-        assert!(spec.channels["test.channel"].bindings.is_some());
-        let channel_bindings = spec.channels["test.channel"].bindings.as_ref().unwrap();
-        assert_eq!(channel_bindings["nats"]["queue"], "workers");
-    }
-}
-

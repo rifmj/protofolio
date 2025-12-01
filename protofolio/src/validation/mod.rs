@@ -36,6 +36,7 @@
 //! Note: The `try_asyncapi()` method automatically validates the spec, so you
 //! typically don't need to call `validate_spec` separately.
 
+mod bindings;
 mod validator;
 
 pub use validator::*;

@@ -61,6 +61,9 @@ pub fn generate_messages_code(
                         payload: MessagePayload {
                             schema: schema,
                         },
+                        external_docs: #message_type_ident::external_docs(),
+                        examples: #message_type_ident::examples(),
+                        headers: #message_type_ident::headers(),
                     };
                     
                     channels_map.get_mut(channel_name)
@@ -123,6 +126,9 @@ pub fn generate_messages_try_code(
                         payload: MessagePayload {
                             schema: schema,
                         },
+                        external_docs: #message_type_ident::external_docs(),
+                        examples: #message_type_ident::examples(),
+                        headers: #message_type_ident::headers(),
                     };
                     
                     channels_map.get_mut(channel_name)

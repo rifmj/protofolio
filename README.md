@@ -62,6 +62,7 @@ See the [Getting Started Guide](docs/guides/getting-started.md) for installation
 - **[Getting Started](docs/guides/getting-started.md)** - Installation, requirements, and quick start
 - **[Messages](docs/guides/messages.md)** - How to define and configure message types
 - **[Operations](docs/guides/operations.md)** - How to define publish/subscribe operations
+- **[Security](docs/guides/security.md)** - How to define and use security schemes
 - **[Validation](docs/guides/validation.md)** - Understanding validation and error handling
 - **[Best Practices](docs/guides/best-practices.md)** - Recommended patterns and conventions
 
@@ -94,7 +95,7 @@ Add to your `Cargo.toml`:
 protofolio = "0.1.0"
 protofolio-derive = "0.1.0"
 serde = { version = "1.0", features = ["derive"] }
-schemars = { version = "0.8", features = ["derive"] }
+schemars = { version = "1.0", features = ["derive"] }
 ```
 
 **Requirements**: Rust 1.80 or later. Your message types must implement `Serialize`, `Deserialize`, and `JsonSchema`.
@@ -123,13 +124,13 @@ This crate is in active development. Current features:
 - ✅ Comprehensive error handling (`try_asyncapi()` with Result types)
 - ✅ Operations support (publish/subscribe with full attribute support)
 - ✅ Protocol-specific bindings for NATS, Kafka, and MQTT
+- ✅ Security schemes (userPassword, apiKey, http, oauth2, etc.)
+- ✅ External documentation support (Info, Message, Operation)
+- ✅ Server variables (templated URLs with variable definitions)
 
 Future expansions planned:
 
 - Components and `$ref` references
-- Security schemes
-- External documentation
-- Server variables
 - Message examples and headers
 - Correlation IDs
 - Full AsyncAPI 3.0 feature set

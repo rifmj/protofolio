@@ -30,5 +30,19 @@ pub fn parse_optional_comma(input: ParseStream) -> syn::Result<()> {
     Ok(())
 }
 
-
-
+/// Parse an examples array from bracketed content
+///
+/// Expects format: `["example1", "example2", ...]`
+pub fn parse_examples_array(input: ParseStream) -> syn::Result<Vec<LitStr>> {
+    let content;
+    syn::bracketed!(content in input);
+    let mut example_list = Vec::new();
+    while !content.is_empty() {
+        let lit: LitStr = content.parse()?;
+        example_list.push(lit);
+        if content.peek(Token![,]) {
+            content.parse::<Token![,]>()?;
+        }
+    }
+    Ok(example_list)
+}

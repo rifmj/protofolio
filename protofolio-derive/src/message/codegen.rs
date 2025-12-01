@@ -1,8 +1,9 @@
 //! Code generation for AsyncApiMessage derive macro
 
+use crate::message::attrs::ExternalDocsAttrs;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, LitStr};
+use syn::{Ident, LitStr, Path};
 
 /// Generate optional field code
 pub fn generate_optional_field_code(option: &Option<LitStr>) -> TokenStream {
@@ -33,6 +34,86 @@ pub fn generate_tags_code(tags: &Option<Vec<LitStr>>) -> TokenStream {
     )
 }
 
+/// Generate external documentation code
+pub fn generate_external_docs_code(external_docs: &Option<ExternalDocsAttrs>) -> TokenStream {
+    external_docs.as_ref().map_or_else(
+        || quote! { None },
+        |ext_docs| {
+            let url_lit = &ext_docs.url;
+            let desc_expr = ext_docs.description.as_ref().map_or_else(
+                || quote! { None },
+                |desc| {
+                    let desc_str = desc.value();
+                    quote! { Some(#desc_str.to_string()) }
+                },
+            );
+            quote! {
+                Some(protofolio::ExternalDocumentation {
+                    url: #url_lit.to_string(),
+                    description: #desc_expr,
+                })
+            }
+        },
+    )
+}
+
+/// Generate examples code
+/// Supports both single example and multiple examples
+pub fn generate_examples_code(
+    example: &Option<LitStr>,
+    examples: &Option<Vec<LitStr>>,
+) -> TokenStream {
+    // If both are provided, examples takes precedence
+    if let Some(examples_list) = examples {
+        let example_exprs: Vec<_> = examples_list
+            .iter()
+            .map(|ex| {
+                quote! {
+                    serde_json::from_str(#ex).unwrap_or_else(|e| {
+                        panic!("Failed to parse example JSON '{}': {}", #ex, e)
+                    })
+                }
+            })
+            .collect();
+        quote! { Some(vec![#(#example_exprs),*]) }
+    } else if let Some(ex) = example {
+        quote! {
+            Some(vec![
+                serde_json::from_str(#ex).unwrap_or_else(|e| {
+                    panic!("Failed to parse example JSON '{}': {}", #ex, e)
+                })
+            ])
+        }
+    } else {
+        quote! { None }
+    }
+}
+
+/// Generate headers code
+/// Headers is a type path that should implement JsonSchema
+pub fn generate_headers_code(headers: &Option<Path>) -> TokenStream {
+    headers.as_ref().map_or_else(
+        || quote! { None },
+        |headers_type| {
+            quote! {
+                {
+                    use schemars::JsonSchema;
+                    match protofolio::schema_for_type::<#headers_type>() {
+                        Ok(schema) => Some(protofolio::MessagePayload { schema }),
+                        Err(e) => {
+                            panic!(
+                                "Failed to generate schema for headers type '{}': {}. Ensure the type implements JsonSchema trait (derive JsonSchema).",
+                                stringify!(#headers_type),
+                                e
+                            )
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
 /// Generate the complete impl block for AsyncApiMessage
 pub fn generate_impl_block(
     ident: &Ident,
@@ -44,6 +125,9 @@ pub fn generate_impl_block(
     title_opt: TokenStream,
     content_type_opt: TokenStream,
     tags_opt: TokenStream,
+    external_docs_opt: TokenStream,
+    examples_opt: TokenStream,
+    headers_opt: TokenStream,
 ) -> TokenStream {
     quote! {
         impl #ident {
@@ -88,6 +172,21 @@ pub fn generate_impl_block(
             /// Get the tags for this message
             pub fn tags() -> Option<Vec<protofolio::Tag>> {
                 #tags_opt
+            }
+            
+            /// Get the external documentation for this message
+            pub fn external_docs() -> Option<protofolio::ExternalDocumentation> {
+                #external_docs_opt
+            }
+            
+            /// Get the examples for this message
+            pub fn examples() -> Option<Vec<serde_json::Value>> {
+                #examples_opt
+            }
+            
+            /// Get the headers schema for this message
+            pub fn headers() -> Option<protofolio::MessagePayload> {
+                #headers_opt
             }
         }
     }

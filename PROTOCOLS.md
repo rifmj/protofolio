@@ -16,12 +16,36 @@ NATS is a lightweight, high-performance messaging system designed for cloud-nati
 
 ### Server Configuration
 
+Basic server configuration:
+
 ```rust
 #[derive(AsyncApi)]
 #[asyncapi(
     info(title = "My API", version = "1.0.0"),
     servers(
         (name = "nats", url = "nats://localhost:4222", protocol = "nats")
+    ),
+    // ...
+)]
+struct MyApi;
+```
+
+Server with variables (templated URLs):
+
+```rust
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(title = "My API", version = "1.0.0"),
+    servers(
+        (
+            name = "nats",
+            url = "nats://{host}:{port}",
+            protocol = "nats",
+            variables = [
+                (name = "host", default = "localhost", description = "Server hostname"),
+                (name = "port", default = "4222", enum_values = ["4222", "4223", "4224"], description = "Server port")
+            ]
+        )
     ),
     // ...
 )]

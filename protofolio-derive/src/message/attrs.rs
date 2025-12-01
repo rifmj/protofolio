@@ -1,7 +1,13 @@
 //! Parser structures and implementations for AsyncApiMessage attributes
 
-use crate::parse_utils::{parse_optional_comma, parse_tags_array};
-use syn::{parse::Parse, Error, LitStr, Token};
+use crate::parse_utils::{parse_examples_array, parse_optional_comma, parse_tags_array};
+use syn::{parse::Parse, Error, LitStr, Path, Token};
+
+/// Parser structure for external documentation attributes
+pub struct ExternalDocsAttrs {
+    pub url: LitStr,
+    pub description: Option<LitStr>,
+}
 
 /// Parser structure for message attributes
 pub struct MessageAttrs {
@@ -13,6 +19,48 @@ pub struct MessageAttrs {
     pub title: Option<LitStr>,
     pub content_type: Option<LitStr>,
     pub tags: Option<Vec<LitStr>>,
+    pub external_docs: Option<ExternalDocsAttrs>,
+    pub example: Option<LitStr>,
+    pub examples: Option<Vec<LitStr>>,
+    pub headers: Option<Path>,
+}
+
+impl Parse for ExternalDocsAttrs {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let mut url = None;
+        let mut description = None;
+        
+        while !input.is_empty() {
+            let lookahead = input.lookahead1();
+            if lookahead.peek(syn::Ident) {
+                let ident: syn::Ident = input.parse()?;
+                input.parse::<Token![=]>()?;
+                let lit: LitStr = input.parse()?;
+                
+                match ident.to_string().as_str() {
+                    "url" => url = Some(lit),
+                    "description" => description = Some(lit),
+                    _ => {
+                        return Err(Error::new(
+                            ident.span(),
+                            format!(
+                                "Unknown external_docs attribute '{ident}'. Expected one of: url, description\n\nExample: #[asyncapi(external_docs(url = \"https://example.com/docs\", description = \"External documentation\"))]"
+                            ),
+                        ));
+                    }
+                }
+            } else {
+                return Err(lookahead.error());
+            }
+            
+            parse_optional_comma(input)?;
+        }
+        
+        Ok(Self {
+            url: url.ok_or_else(|| input.error("external_docs requires 'url'"))?,
+            description,
+        })
+    }
 }
 
 impl Parse for MessageAttrs {
@@ -25,6 +73,10 @@ impl Parse for MessageAttrs {
         let mut title = None;
         let mut content_type = None;
         let mut tags = None;
+        let mut external_docs = None;
+        let mut example = None;
+        let mut examples = None;
+        let mut headers = None;
         
         while !input.is_empty() {
             let lookahead = input.lookahead1();
@@ -37,25 +89,59 @@ impl Parse for MessageAttrs {
                 if ident == "tags" {
                     input.parse::<Token![=]>()?;
                     tags = Some(parse_tags_array(input)?);
+                } else if ident == "examples" {
+                    input.parse::<Token![=]>()?;
+                    examples = Some(parse_examples_array(input)?);
+                } else if ident_str == "external_docs" || ident_str == "externalDocs" {
+                    let content;
+                    syn::parenthesized!(content in input);
+                    external_docs = Some(content.parse()?);
+                } else if ident == "headers" {
+                    input.parse::<Token![=]>()?;
+                    headers = Some(input.parse::<Path>()?);
                 } else {
                     // Parse the = and value
                     input.parse::<Token![=]>()?;
-                    let lit: LitStr = input.parse()?;
                     let span = ident.span();
                     
                     match ident_str.as_str() {
-                        "channel" => channel = Some(lit),
-                        "summary" => summary = Some(lit),
-                        "description" => description = Some(lit),
-                        "messageId" | "message_id" => message_id = Some(lit),
-                        "name" => name = Some(lit),
-                        "title" => title = Some(lit),
-                        "contentType" | "content_type" => content_type = Some(lit),
+                        "channel" => {
+                            let lit: LitStr = input.parse()?;
+                            channel = Some(lit);
+                        }
+                        "summary" => {
+                            let lit: LitStr = input.parse()?;
+                            summary = Some(lit);
+                        }
+                        "description" => {
+                            let lit: LitStr = input.parse()?;
+                            description = Some(lit);
+                        }
+                        "messageId" | "message_id" => {
+                            let lit: LitStr = input.parse()?;
+                            message_id = Some(lit);
+                        }
+                        "name" => {
+                            let lit: LitStr = input.parse()?;
+                            name = Some(lit);
+                        }
+                        "title" => {
+                            let lit: LitStr = input.parse()?;
+                            title = Some(lit);
+                        }
+                        "contentType" | "content_type" => {
+                            let lit: LitStr = input.parse()?;
+                            content_type = Some(lit);
+                        }
+                        "example" => {
+                            let lit: LitStr = input.parse()?;
+                            example = Some(lit);
+                        }
                         _ => {
                             return Err(Error::new(
                                 span,
                                 format!(
-                                    "Unknown attribute '{ident_str}'. Expected one of: channel, summary, description, messageId, name, title, contentType, tags\n\nExample: #[asyncapi(channel = \"events\", messageId = \"event-v1\", name = \"Event\", summary = \"An event\", tags = [\"events\"])]"
+                                    "Unknown attribute '{ident_str}'. Expected one of: channel, summary, description, messageId, name, title, contentType, tags, example, examples, headers, external_docs\n\nExample: #[asyncapi(channel = \"events\", messageId = \"event-v1\", name = \"Event\", summary = \"An event\", tags = [\"events\"], example = \"{{\\\"id\\\": \\\"123\\\"}}\", headers = MyHeaders, external_docs(url = \"https://example.com/docs\"))]"
                                 ),
                             ));
                         }
@@ -77,6 +163,10 @@ impl Parse for MessageAttrs {
             title,
             content_type,
             tags,
+            external_docs,
+            example,
+            examples,
+            headers,
         })
     }
 }

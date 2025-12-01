@@ -2,7 +2,7 @@
 //!
 //! This module contains types related to channels, messages, and their metadata.
 
-use crate::spec::Messages;
+use crate::spec::{ExternalDocumentation, Messages};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -62,6 +62,18 @@ pub struct Message {
     
     /// Message payload schema
     pub payload: MessagePayload,
+    
+    /// External documentation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_docs: Option<ExternalDocumentation>,
+    
+    /// Message examples
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub examples: Option<Vec<serde_json::Value>>,
+    
+    /// Message headers schema
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headers: Option<MessagePayload>,
 }
 
 /// Message payload schema

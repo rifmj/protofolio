@@ -28,6 +28,7 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
     let mut info_title = None;
     let mut info_version = None;
     let mut info_description = None;
+    let mut info_external_docs = None;
     let mut servers = Vec::new();
     let mut security_schemes = Vec::new();
     let mut channels = Vec::new();
@@ -62,6 +63,7 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
                 if let Some(description) = info.description {
                     info_description = Some(description.value());
                 }
+                info_external_docs = info.external_docs;
             }
             
             // Process servers
@@ -110,6 +112,26 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
         },
     );
     
+    let info_external_docs_expr = info_external_docs.as_ref().map_or_else(
+        || quote! { None },
+        |ext_docs| {
+            let url_lit = &ext_docs.url;
+            let desc_expr = ext_docs.description.as_ref().map_or_else(
+                || quote! { None },
+                |desc| {
+                    let desc_str = desc.value();
+                    quote! { Some(#desc_str.to_string()) }
+                },
+            );
+            quote! {
+                Some(protofolio::ExternalDocumentation {
+                    url: #url_lit.to_string(),
+                    description: #desc_expr,
+                })
+            }
+        },
+    );
+    
     // Generate code for servers
     let servers_code = generate_servers_code(&servers);
     
@@ -137,6 +159,7 @@ pub fn derive_asyncapi(input: DeriveInput) -> Result<TokenStream, Error> {
         &info_title,
         &info_version,
         info_desc_expr,
+        info_external_docs_expr,
         &servers_code,
         security_schemes_code,
         &channels_code,

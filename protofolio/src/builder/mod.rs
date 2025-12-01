@@ -4,5 +4,8 @@
 
 mod builder;
 
+#[cfg(test)]
+mod tests;
+
 pub use builder::*;
 

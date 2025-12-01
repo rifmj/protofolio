@@ -5,11 +5,13 @@ This document describes known limitations of `protofolio` and potential workarou
 ## Compile-Time vs Runtime Validation
 
 **Compile-time validation** (what the macros check):
+
 - `CHANNEL` consts exist for all message/operation types
 - Attribute syntax is correct
 - Required fields are present
 
 **Runtime validation** (what happens when generating the spec):
+
 - Channel references match declared channels
 - Message references exist in their channels
 - JSON Schema generation succeeds
@@ -88,9 +90,9 @@ pub struct MyApi;
 Not all AsyncAPI 3.0 features are supported yet:
 
 - ❌ Components and `$ref` references (planned)
-- ❌ Security schemes (planned)
-- ❌ External documentation (planned)
-- ❌ Server variables (planned)
+- ✅ Security schemes
+- ✅ External documentation
+- ✅ Server variables
 - ❌ Message examples (planned)
 - ❌ Message headers (planned)
 - ❌ Correlation IDs (planned)
@@ -148,4 +150,3 @@ Potential future enhancements:
 
 - [Troubleshooting](troubleshooting.md) - Solutions to common issues
 - [Macro Expansion](macro-expansion.md) - How macros work internally
-

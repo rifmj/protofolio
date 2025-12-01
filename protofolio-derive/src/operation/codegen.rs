@@ -1,5 +1,6 @@
 //! Code generation for AsyncApiOperation derive macro
 
+use crate::operation::attrs::ExternalDocsAttrs;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Ident, LitStr};
@@ -33,6 +34,29 @@ pub fn generate_tags_code(tags: &Option<Vec<LitStr>>) -> TokenStream {
     )
 }
 
+/// Generate external documentation code
+pub fn generate_external_docs_code(external_docs: &Option<ExternalDocsAttrs>) -> TokenStream {
+    external_docs.as_ref().map_or_else(
+        || quote! { None },
+        |ext_docs| {
+            let url_lit = &ext_docs.url;
+            let desc_expr = ext_docs.description.as_ref().map_or_else(
+                || quote! { None },
+                |desc| {
+                    let desc_str = desc.value();
+                    quote! { Some(#desc_str.to_string()) }
+                },
+            );
+            quote! {
+                Some(protofolio::ExternalDocumentation {
+                    url: #url_lit.to_string(),
+                    description: #desc_expr,
+                })
+            }
+        },
+    )
+}
+
 /// Generate the complete impl block for AsyncApiOperation
 pub fn generate_impl_block(
     ident: &Ident,
@@ -43,6 +67,7 @@ pub fn generate_impl_block(
     summary_opt: TokenStream,
     desc_opt: TokenStream,
     tags_opt: TokenStream,
+    external_docs_opt: TokenStream,
 ) -> TokenStream {
     quote! {
         impl #ident {
@@ -84,6 +109,10 @@ pub fn generate_impl_block(
 
             fn tags() -> Option<Vec<protofolio::Tag>> {
                 #tags_opt
+            }
+            
+            fn external_docs() -> Option<protofolio::ExternalDocumentation> {
+                #external_docs_opt
             }
         }
     }

@@ -1,57 +1,48 @@
 # Cursor Rules for protofolio
 
-## Project Context
-
-This is a Rust workspace for generating AsyncAPI 3.0 specifications from code annotations using procedural macros.
+Rust workspace for AsyncAPI 3.0 spec generation from code annotations via procedural macros.
 
 ## Code Style
-
-- Follow Rust API guidelines
-- Use `pub(crate)` for internal APIs
-- Prefer type-safe enums over strings
-- Centralize error types in `error.rs`
 - Rust 1.80+ (MSRV), Edition 2021
-- Deny unsafe code, require documentation for public APIs
+- Follow Rust API guidelines
+- `pub(crate)` for internal APIs
+- Type-safe enums over strings
+- Centralize errors in `error.rs`
+- Deny unsafe code, require docs for public APIs
 
 ## Error Handling
+- Production: `try_asyncapi()` (Result)
+- Development: `asyncapi()` (panic)
+- Errors in `error.rs` via `thiserror`
 
-- Production: Use `try_asyncapi()` (Result-based)
-- Development: Use `asyncapi()` (panic-on-error)
-- All errors in `error.rs` using `thiserror`
-
-## Naming Conventions
-
-- Channels: dot-separated hierarchical (`order.created`, `order.status.changed`)
+## Naming
+- Channels: dot-separated (`order.created`, `order.status.changed`)
 - Message IDs: include version (`order-created-v1`)
-- Channel names: NO versions (use `messageId` for versions)
+- Channels: NO versions (use `messageId`)
 
-## Architecture Principles
+## Architecture
+- Separation of concerns per module
+- Clean public API via `lib.rs`
+- `pub(crate)` for internals
+- Modular, extensible
 
-- Separation of concerns - each module has single responsibility
-- Clean public API - `lib.rs` curates exports
-- Internal utilities use `pub(crate)`
-- Modular organization - easy to extend
-
-## When Writing Code
-
+## Guidelines
 - Add helpful error messages with hints
 - Consider backwards compatibility
 - Add tests for new features
-- Update documentation in `docs/` directory
-- Follow existing patterns in the codebase
+- Update `docs/` when changing behavior
+- Follow existing patterns
 
-## Important Modules
-
-- `protofolio/src/spec/` - AsyncAPI data structures
-- `protofolio/src/schema/` - JSON Schema generation with caching
-- `protofolio/src/validation/` - Spec validation
-- `protofolio-derive/src/asyncapi/` - Main derive macro
-- `protofolio-derive/src/message/` - Message derive macro
-- `protofolio-derive/src/operation/` - Operation derive macro
+## Key Modules
+- `protofolio/src/spec/` - AsyncAPI structures
+- `protofolio/src/schema/` - Schema generation (cached)
+- `protofolio/src/validation/` - Validation
+- `protofolio-derive/src/asyncapi/` - Main macro
+- `protofolio-derive/src/message/` - Message macro
+- `protofolio-derive/src/operation/` - Operation macro
 
 ## Testing
-
-- Unit tests co-located with modules
+- Unit tests co-located
 - Integration tests in `tests/`
 - Trybuild tests for macro errors
-- Test both `asyncapi()` and `try_asyncapi()` paths
+- Test both `asyncapi()` and `try_asyncapi()`

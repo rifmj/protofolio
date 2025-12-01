@@ -73,6 +73,51 @@ fn test_asyncapi_has_servers() {
     assert_eq!(servers["nats"].url, "nats://localhost:4222");
 }
 
+// Test server with variables
+#[derive(AsyncApi)]
+#[asyncapi(
+    info(
+        title = "Test AsyncAPI with Variables",
+        version = "1.0.0"
+    ),
+    servers(
+        (
+            name = "nats",
+            url = "nats://{host}:{port}",
+            protocol = "nats",
+            variables = [
+                (name = "host", default = "localhost", description = "Server hostname"),
+                (name = "port", default = "4222", enum_values = ["4222", "4223", "4224"], description = "Server port")
+            ]
+        )
+    ),
+    channels("test.channel"),
+    messages(TestMessage)
+)]
+pub struct TestAsyncApiWithVariables;
+
+#[test]
+fn test_asyncapi_server_variables() {
+    let spec = TestAsyncApiWithVariables::asyncapi();
+    assert!(spec.servers.is_some());
+    let servers = spec.servers.as_ref().unwrap();
+    assert!(servers.contains_key("nats"));
+    let server = &servers["nats"];
+    assert_eq!(server.url, "nats://{host}:{port}");
+    assert!(server.variables.is_some());
+    let vars = server.variables.as_ref().unwrap();
+    assert!(vars.contains_key("host"));
+    assert!(vars.contains_key("port"));
+    assert_eq!(vars["host"].default, Some("localhost".to_string()));
+    assert_eq!(vars["host"].description, Some("Server hostname".to_string()));
+    assert_eq!(vars["port"].default, Some("4222".to_string()));
+    assert_eq!(vars["port"].description, Some("Server port".to_string()));
+    assert_eq!(
+        vars["port"].enum_values,
+        Some(vec!["4222".to_string(), "4223".to_string(), "4224".to_string()])
+    );
+}
+
 #[test]
 fn test_message_attributes() {
     let spec = TestAsyncApi::asyncapi();
@@ -279,6 +324,130 @@ fn test_asyncapi_with_operations() {
     let subscribe_op = operations.get("subscribe-simple-message").unwrap();
     assert_eq!(subscribe_op.action, "receive");
     assert_eq!(subscribe_op.channel.ref_path, "#/channels/simple.channel");
+}
+
+#[test]
+fn test_message_examples() {
+    // Test message with single example
+    #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+    #[asyncapi(
+        channel = "examples.channel",
+        messageId = "example-message-v1",
+        example = r#"{"id": "123", "value": "test"}"#
+    )]
+    pub struct ExampleMessage {
+        pub id: String,
+        pub value: String,
+    }
+    
+    // Test message with multiple examples
+    #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+    #[asyncapi(
+        channel = "examples.channel",
+        messageId = "multi-example-message-v1",
+        examples = [r#"{"id": "1", "value": "first"}"#, r#"{"id": "2", "value": "second"}"#]
+    )]
+    pub struct MultiExampleMessage {
+        pub id: String,
+        pub value: String,
+    }
+    
+    // Verify single example
+    let examples = ExampleMessage::examples();
+    assert!(examples.is_some());
+    let examples_vec = examples.unwrap();
+    assert_eq!(examples_vec.len(), 1);
+    assert_eq!(examples_vec[0]["id"], "123");
+    assert_eq!(examples_vec[0]["value"], "test");
+    
+    // Verify multiple examples
+    let examples = MultiExampleMessage::examples();
+    assert!(examples.is_some());
+    let examples_vec = examples.unwrap();
+    assert_eq!(examples_vec.len(), 2);
+    assert_eq!(examples_vec[0]["id"], "1");
+    assert_eq!(examples_vec[0]["value"], "first");
+    assert_eq!(examples_vec[1]["id"], "2");
+    assert_eq!(examples_vec[1]["value"], "second");
+}
+
+#[test]
+fn test_message_headers() {
+    // Define a header type
+    #[derive(Serialize, Deserialize, JsonSchema)]
+    pub struct MessageHeaders {
+        pub correlation_id: String,
+        pub user_id: Option<String>,
+    }
+    
+    // Test message with headers
+    #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+    #[asyncapi(
+        channel = "headers.channel",
+        messageId = "header-message-v1",
+        headers = MessageHeaders
+    )]
+    pub struct HeaderMessage {
+        pub id: String,
+        pub data: String,
+    }
+    
+    // Verify headers schema is generated
+    let headers = HeaderMessage::headers();
+    assert!(headers.is_some());
+    let headers_payload = headers.unwrap();
+    // Verify it's a valid JSON schema
+    assert!(headers_payload.schema.is_object());
+    // Check that the schema contains the expected fields
+    if let Some(properties) = headers_payload.schema.get("properties") {
+        assert!(properties.get("correlation_id").is_some());
+        assert!(properties.get("user_id").is_some());
+    }
+}
+
+#[test]
+fn test_message_with_examples_and_headers_in_spec() {
+    // Define a header type
+    #[derive(Serialize, Deserialize, JsonSchema)]
+    pub struct TestHeaders {
+        pub correlation_id: String,
+    }
+    
+    // Test message with both examples and headers
+    #[derive(Serialize, Deserialize, JsonSchema, AsyncApiMessage)]
+    #[asyncapi(
+        channel = "full.channel",
+        messageId = "full-message-v1",
+        example = r#"{"id": "test", "data": "example"}"#,
+        headers = TestHeaders
+    )]
+    pub struct FullMessage {
+        pub id: String,
+        pub data: String,
+    }
+    
+    #[derive(AsyncApi)]
+    #[asyncapi(
+        info(title = "Full Test API", version = "1.0.0"),
+        channels("full.channel"),
+        messages(FullMessage)
+    )]
+    pub struct FullTestApi;
+    
+    let spec = FullTestApi::asyncapi();
+    let channel = spec.channels.get("full.channel").unwrap();
+    let message = channel.messages.get("FullMessage").unwrap();
+    
+    // Verify examples are included
+    assert!(message.examples.is_some());
+    let examples = message.examples.as_ref().unwrap();
+    assert_eq!(examples.len(), 1);
+    assert_eq!(examples[0]["id"], "test");
+    
+    // Verify headers are included
+    assert!(message.headers.is_some());
+    let headers = message.headers.as_ref().unwrap();
+    assert!(headers.schema.is_object());
 }
 
 #[test]

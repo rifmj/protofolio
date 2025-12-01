@@ -5,7 +5,7 @@ mod codegen;
 
 use crate::operation::{
     attrs::OperationAttrs,
-    codegen::{generate_impl_block, generate_optional_field_code, generate_tags_code},
+    codegen::{generate_external_docs_code, generate_impl_block, generate_optional_field_code, generate_tags_code},
 };
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
@@ -24,6 +24,7 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
     let mut summary = None;
     let mut description = None;
     let mut tags = None;
+    let mut external_docs = None;
 
     for attr in &input.attrs {
         if attr.path().is_ident("asyncapi") {
@@ -48,6 +49,7 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
                     summary = attrs.summary;
                     description = attrs.description;
                     tags = attrs.tags;
+                    external_docs = attrs.external_docs;
                 }
                 Err(e) => {
                     abort!(
@@ -112,6 +114,7 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
     let summary_opt = generate_optional_field_code(&summary);
     let desc_opt = generate_optional_field_code(&description);
     let tags_opt = generate_tags_code(&tags);
+    let external_docs_opt = generate_external_docs_code(&external_docs);
 
     // Generate code that stores metadata
     Ok(generate_impl_block(
@@ -123,6 +126,7 @@ pub fn derive_asyncapi_operation(input: DeriveInput) -> Result<TokenStream, Erro
         summary_opt,
         desc_opt,
         tags_opt,
+        external_docs_opt,
     ))
 }
 

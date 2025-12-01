@@ -2,7 +2,7 @@
 //!
 //! This module contains types related to operations (send/receive actions).
 
-use crate::spec::Tag;
+use crate::spec::{ExternalDocumentation, Tag};
 use serde::{Deserialize, Serialize};
 
 /// Operation definition
@@ -28,6 +28,10 @@ pub struct Operation {
     /// Operation tags
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<Tag>>,
+    
+    /// External documentation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_docs: Option<ExternalDocumentation>,
 }
 
 /// Channel reference in operation

@@ -36,6 +36,7 @@ The `AsyncApiMessage` derive macro supports the following attributes:
 - `description` - Detailed description
 - `contentType` - Content type (default: "application/json")
 - `tags` - Array of tag names (e.g., `tags = ["order", "status"]`)
+- `external_docs` - External documentation reference (e.g., `external_docs(url = "https://example.com/docs", description = "Documentation")`)
 
 ## Complete Example
 
@@ -53,7 +54,8 @@ use schemars::JsonSchema;
     summary = "Order Status Changed Event",
     description = "Published when order status changes",
     contentType = "application/json",
-    tags = ["order", "status"]
+    tags = ["order", "status"],
+    external_docs(url = "https://example.com/docs/order-status", description = "Order status documentation")
 )]
 pub struct OrderStatusChanged {
     pub order_id: String,

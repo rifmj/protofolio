@@ -20,7 +20,7 @@ Add to your `Cargo.toml`:
 protofolio = "0.1.0"
 protofolio-derive = "0.1.0"
 serde = { version = "1.0", features = ["derive"] }
-schemars = { version = "0.8", features = ["derive"] }
+schemars = { version = "1.0", features = ["derive"] }
 ```
 
 ## Quick Start

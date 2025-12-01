@@ -1,47 +1,35 @@
 # AI Context for protofolio
 
-## Quick Reference
+Rust crate for AsyncAPI 3.0 spec generation from code annotations. Workspace: `protofolio` (runtime) + `protofolio-derive` (macros). MSRV: 1.80+, Edition: 2021.
 
-**Project**: Rust crate for AsyncAPI 3.0 spec generation from code annotations  
-**Workspace**: Two crates - `protofolio` (runtime) and `protofolio-derive` (procedural macros)  
-**MSRV**: Rust 1.80+  
-**Edition**: 2021
-
-## Key Patterns
-
-- **Procedural macros** for code generation at compile time
-- **Builder pattern** for spec construction
-- **Schema caching** with `LazyLock<Mutex<HashMap<TypeId, Arc<Value>>>>`
-- **Dual API**: `asyncapi()` (panic) and `try_asyncapi()` (Result)
-- **Type-safe enums** instead of strings
-- **Centralized errors** in `error.rs`
+## Patterns
+- Procedural macros for compile-time code generation
+- Builder pattern for specs
+- Schema caching: `LazyLock<Mutex<HashMap<TypeId, Arc<Value>>>>`
+- Dual API: `asyncapi()` (panic) and `try_asyncapi()` (Result)
+- Type-safe enums, centralized errors in `error.rs`
 
 ## Structure
-
 ```
-protofolio/          # Runtime library
-  src/spec/          # AsyncAPI data structures
-  src/schema/        # JSON Schema generation
-  src/validation/    # Spec validation
-  src/protocol/      # NATS, Kafka, MQTT support
+protofolio/          # Runtime
+  src/spec/          # AsyncAPI structures
+  src/schema/        # JSON Schema (cached)
+  src/validation/    # Validation
+  src/protocol/      # NATS, Kafka, MQTT
 
-protofolio-derive/   # Procedural macros
-  src/asyncapi/      # Main AsyncApi derive
+protofolio-derive/   # Macros
+  src/asyncapi/      # AsyncApi derive
   src/message/       # AsyncApiMessage derive
   src/operation/     # AsyncApiOperation derive
 ```
 
 ## Conventions
-
-- Channels: `order.created`, `order.status.changed` (dot-separated, lowercase)
+- Channels: `order.created` (dot-separated, lowercase)
 - Message IDs: `order-created-v1` (include version)
-- Use `pub(crate)` for internal APIs
-- Error handling: `thiserror` for error types
+- `pub(crate)` for internals
+- `thiserror` for errors
 
-## Documentation
-
-- User docs: `docs/` (guides, examples, reference)
+## Docs
+- User: `docs/` (guides, examples, reference)
 - Architecture: `ARCHITECTURE.md`
 - Protocols: `PROTOCOLS.md`
-- Contributing: `CONTRIBUTING.md`
-
