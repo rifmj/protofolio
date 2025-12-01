@@ -1,0 +1,31 @@
+# Aider ignore file for protofolio
+# Files and directories to exclude from AI context
+
+# Build artifacts
+target/
+Cargo.lock
+
+# Generated documentation
+target/doc/
+
+# Trybuild test outputs
+*.stderr
+*.stdout
+
+# Work in progress
+wip/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+flycheck0/
+

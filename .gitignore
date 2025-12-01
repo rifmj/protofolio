@@ -1,0 +1,40 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo
+Cargo.lock
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Rust analyzer
+rust-project.json
+
+# Backup files
+*.bak
+*.orig
+
+# Test artifacts
+*.stderr
+*.stdout
+
+# Documentation
+/doc/
+
+# Temporary files
+tmp/
+*.tmp
+
+# Coverage reports
+coverage/
+*.lcov
+lcov.info
+*.profraw
+

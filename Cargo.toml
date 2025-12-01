@@ -1,0 +1,63 @@
+[workspace]
+members = ["protofolio", "protofolio-derive"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml_ng = "0.10"
+schemars = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+syn = { version = "2.0", features = ["full", "parsing", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[workspace.lints.rust]
+# Deny unsafe code across the workspace
+unsafe_code = "deny"
+# Warn on missing documentation
+missing_docs = "warn"
+# Warn on missing debug implementations
+missing_debug_implementations = "warn"
+
+[workspace.lints.rustdoc]
+# Deny broken intra-doc links
+broken_intra_doc_links = "deny"
+# Allow missing doc code examples
+missing_doc_code_examples = "allow"
+# Allow private intra-doc links
+private_intra_doc_links = "allow"
+
+[workspace.lints.clippy]
+# Enable pedantic lints (includes most useful lints)
+pedantic = "warn"
+# Enable nursery (new) lints
+nursery = "warn"
+# Enable cargo lints
+cargo = "warn"
+# Warn on unwrap usage
+unwrap_used = "warn"
+# Warn on expect usage
+expect_used = "warn"
+# Allow multiple crate versions (some dependencies may have multiple versions)
+multiple_crate_versions = "allow"
+# Allow missing docs in private items (can be fixed incrementally)
+missing_docs_in_private_items = "allow"
+# Allow result_large_err (Result<TokenStream, Error> is fine for macros)
+result_large_err = "allow"
+# Allow too_many_lines (macro code is inherently long)
+too_many_lines = "allow"
+# Style preferences (optional improvements)
+must_use_candidate = "allow"
+use_self = "allow"
+uninlined_format_args = "allow"
+redundant_closure = "allow"
+wildcard_imports = "allow"
+option_if_let_else = "allow"
+

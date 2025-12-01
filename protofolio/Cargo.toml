@@ -1,0 +1,65 @@
+[package]
+name = "protofolio"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors = ["Rifat Dzhumagulov <jum.rifm@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "Generate AsyncAPI 3.0 specifications from Rust code annotations"
+repository = "https://github.com/rifmj/protofolio"
+homepage = "https://github.com/rifmj/protofolio"
+documentation = "https://docs.rs/protofolio"
+keywords = ["asyncapi", "api", "specification", "code-generation", "nats", "kafka", "mqtt"]
+categories = ["api-bindings", "development-tools", "web-programming"]
+readme = "../README.md"
+publish = true
+
+[lints]
+workspace = true
+
+[features]
+default = ["nats", "kafka", "mqtt"]
+nats = []
+kafka = []
+mqtt = []
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml_ng = { workspace = true }
+schemars = { workspace = true }
+thiserror = { workspace = true }
+protofolio-derive = { version = "0.1.0", path = "../protofolio-derive" }
+
+[dev-dependencies]
+protofolio-derive = { version = "0.1.0", path = "../protofolio-derive" }
+trybuild = "1.0"
+
+[[example]]
+name = "size_test"
+path = "examples/size_test.rs"
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "full_featured"
+path = "examples/full_featured.rs"
+
+[[example]]
+name = "axum_integration"
+path = "examples/axum_integration.rs"
+
+[[example]]
+name = "nats_example"
+path = "examples/nats_example.rs"
+
+[[example]]
+name = "kafka_example"
+path = "examples/kafka_example.rs"
+
+[[example]]
+name = "mqtt_example"
+path = "examples/mqtt_example.rs"
+

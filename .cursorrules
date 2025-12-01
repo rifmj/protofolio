@@ -1,0 +1,57 @@
+# Cursor Rules for protofolio
+
+## Project Context
+
+This is a Rust workspace for generating AsyncAPI 3.0 specifications from code annotations using procedural macros.
+
+## Code Style
+
+- Follow Rust API guidelines
+- Use `pub(crate)` for internal APIs
+- Prefer type-safe enums over strings
+- Centralize error types in `error.rs`
+- Rust 1.80+ (MSRV), Edition 2021
+- Deny unsafe code, require documentation for public APIs
+
+## Error Handling
+
+- Production: Use `try_asyncapi()` (Result-based)
+- Development: Use `asyncapi()` (panic-on-error)
+- All errors in `error.rs` using `thiserror`
+
+## Naming Conventions
+
+- Channels: dot-separated hierarchical (`order.created`, `order.status.changed`)
+- Message IDs: include version (`order-created-v1`)
+- Channel names: NO versions (use `messageId` for versions)
+
+## Architecture Principles
+
+- Separation of concerns - each module has single responsibility
+- Clean public API - `lib.rs` curates exports
+- Internal utilities use `pub(crate)`
+- Modular organization - easy to extend
+
+## When Writing Code
+
+- Add helpful error messages with hints
+- Consider backwards compatibility
+- Add tests for new features
+- Update documentation in `docs/` directory
+- Follow existing patterns in the codebase
+
+## Important Modules
+
+- `protofolio/src/spec/` - AsyncAPI data structures
+- `protofolio/src/schema/` - JSON Schema generation with caching
+- `protofolio/src/validation/` - Spec validation
+- `protofolio-derive/src/asyncapi/` - Main derive macro
+- `protofolio-derive/src/message/` - Message derive macro
+- `protofolio-derive/src/operation/` - Operation derive macro
+
+## Testing
+
+- Unit tests co-located with modules
+- Integration tests in `tests/`
+- Trybuild tests for macro errors
+- Test both `asyncapi()` and `try_asyncapi()` paths

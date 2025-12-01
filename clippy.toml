@@ -1,0 +1,12 @@
+# Clippy configuration for protofolio
+# This file configures clippy lints for the entire workspace
+
+# MSRV (Minimum Supported Rust Version)
+msrv = "1.80"
+
+# Avoid breaking exported API
+avoid-breaking-exported-api = false
+
+# Additional configuration can be added here
+# See: https://rust-lang.github.io/rust-clippy/master/index.html
+
