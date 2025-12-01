@@ -93,11 +93,11 @@ Not all AsyncAPI 3.0 features are supported yet:
 - ✅ Security schemes
 - ✅ External documentation
 - ✅ Server variables
-- ❌ Message examples (planned)
-- ❌ Message headers (planned)
+- ✅ Message examples
+- ✅ Message headers
 - ❌ Correlation IDs (planned)
 
-See the [Status](../README.md#status) section in the README for current feature support.
+See the [Status](https://github.com/rifmj/protofolio#status) section in the README for current feature support.
 
 ## Schema Customization
 
